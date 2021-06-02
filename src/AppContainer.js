@@ -4,6 +4,7 @@ import queryEns from './queryEns';
 import web3 from 'web3';
 import App from './App';
 
+const shuffle = require('array-shuffle');
 const { useState, useEffect, useCallback} = React;
 
 function AppContainer() {
@@ -17,11 +18,11 @@ function AppContainer() {
     (event) => {
       setLoading(true);
 
-      const value = document.getElementById('address-input').value
-      setErrorMsg(null)
+      const value = document.getElementById('address-input').value;
+      setErrorMsg(null);
 
       if (web3.utils.isAddress(value)) {
-        setAddress(value)
+        setAddress(value);
       } else {
         queryEns(value).then(response => {
           if (response.data.domains.length > 0) {
@@ -31,11 +32,11 @@ function AppContainer() {
             setLoading(false);
           }
         }).catch(error => {
-          console.log(error)
+          console.log(error);
         });
       }
 
-      setSubmitted(true)
+      setSubmitted(true);
     },
     [setAddress, setSubmitted, setErrorMsg, setLoading]
   );
@@ -50,7 +51,7 @@ function AppContainer() {
         }
 
         const data = response.data;
-        const tokens = data.tokens;
+        const tokens = shuffle(data.tokens);
 
         if (tokens.length > 0) {
           setTokens(tokens);

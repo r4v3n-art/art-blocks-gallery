@@ -9,6 +9,7 @@ function App(props) {
   const [tokenIndex, setTokenIndex] = useState(0);
   const [intervalTime, setIntervalTime] = useState(20);
   const [displayControls, setDisplayControls] = useState('block');
+  const token = props.tokens[tokenIndex];
 
   const nextToken = useCallback(
     () => {
@@ -61,6 +62,10 @@ function App(props) {
     [setIntervalTime]
   );
 
+  const mintNumber = (id) => {
+    return parseInt(id.substring(id.length - 5));
+  }
+
   useEffect(() => {
     document.addEventListener('keydown', handleKeyPress);
 
@@ -72,13 +77,6 @@ function App(props) {
   useInterval(() => {
     nextToken();
   }, intervalTime*1000);
-
-  const mintNumber = (id) => {
-    return parseInt(id.substring(id.length - 5));
-  }
-
-  const token = props.tokens[tokenIndex]
-
 
   return (
     <div className="App">
