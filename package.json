@@ -1,7 +1,10 @@
 {
   "name": "art-blocks-gallery",
   "version": "0.1.0",
-  "private": true,
+  "private": false,
+  "description": "A viewer for ArtBlocks NFTs made for display",
+  "license" : "MIT",
+  "author": "r4v3n-art",
   "dependencies": {
     "@testing-library/jest-dom": "^5.11.4",
     "@testing-library/react": "^11.1.0",
