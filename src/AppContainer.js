@@ -1,4 +1,5 @@
 import React from 'react'
+import GitHubButton from 'react-github-btn';
 import fetchTokensByOwner from './fetchTokensByOwner';
 import queryEns from './queryEns';
 import web3 from 'web3';
@@ -73,12 +74,17 @@ function AppContainer() {
     <div className='AppContainer' >
       { submitted && tokens !== null ?
         <App tokens={tokens} /> :
-        <div className='address-group'>
-         <label htmlFor='address'>Enter Address with Art Blocks NFTs</label>
-         <input id='address-input' type='text' name='address' />
-         <button disabled={loading ? 'disabled' : ''} id='enter-button' onClick={handleButtonClick}>Enter</button>
-         <p className='error'>{errorMsg}</p>
-          <p style={{display: loading ? 'block' : 'none'}}>Loading...</p>
+        <div className='home'>
+          <div className='address-group'>
+            <label htmlFor='address'>Enter Address with Art Blocks NFTs</label>
+            <input id='address-input' type='text' name='address' />
+            <button disabled={loading ? 'disabled' : ''} id='enter-button' onClick={handleButtonClick}>Enter</button>
+            <p className='error'>{errorMsg}</p>
+            <p style={{display: loading ? 'block' : 'none'}}>Loading...</p>
+          </div>
+          <div className='contribute-link'>
+            <GitHubButton href="https://github.com/r4v3n-art/art-blocks-gallery" data-color-scheme="no-preference: light; light: light; dark: dark;" data-size="large" data-show-count="true" aria-label="Star r4v3n-art/art-blocks-gallery on GitHub">Star</GitHubButton>
+          </div>
         </div>
       }
     </div>

@@ -23,6 +23,14 @@
   color: red;
 }
 
+.contribute-link {
+  position: absolute;
+  text-align: center;
+  width: 100%;
+  bottom: 10px;
+  left: 0;
+}
+
 .App {
   text-align: center;
 }
