@@ -95,12 +95,12 @@ function App(props) {
         </div>
         <p>Shift-C to show/hide controls</p>
         <div className='token-details'>
-          <p>{`${token.project.name} #${mintNumber(token.id)}`}</p>
+          <p>{`${token.project.name} #${mintNumber(token.tokenId)}`}</p>
           <p>{token.project.artistName}</p>
         </div>
       </div>
       <div className='content'>
-        {props.tokens != null ? <ABFrame tokenId={token.id} /> : "Loading..."}
+        {props.tokens != null ? <ABFrame tokenId={token.tokenId} /> : "Loading..."}
       </div>
     </div>
   );

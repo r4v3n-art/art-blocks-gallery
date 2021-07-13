@@ -1,5 +1,5 @@
 async function fetchTokensByOwner(ownerAddress) {
-  const response = await fetch('https://api.thegraph.com/subgraphs/name/xenoliss/art-blocks-explorer', {
+  const response = await fetch('https://api.thegraph.com/subgraphs/name/artblocks/art-blocks', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -7,7 +7,7 @@ async function fetchTokensByOwner(ownerAddress) {
     body: JSON.stringify({
       query: `query FetchTokensByOwnerQuery {
         tokens(where: {owner: "${ownerAddress}"}) {
-          id
+          tokenId
           project {
             name
             artistName
