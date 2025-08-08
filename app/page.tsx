@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useRouter } from "next/navigation"
 
 export default function HomePage() {
-  const [searchType, setSearchType] = useState("token")
+  const [searchType, setSearchType] = useState("collector")
   const [searchQuery, setSearchQuery] = useState("")
   const router = useRouter()
 
