@@ -15,12 +15,13 @@ This is a Next.js 15 application that creates an immersive Art Blocks NFT galler
 
 ### Core Data Layer (`lib/ab.ts`)
 - **GraphQL Integration**: All data fetching uses Art Blocks' GraphQL endpoint at `https://data.artblocks.io/v1/graphql`
-- **Search Functions**: Provides comprehensive search capabilities for artists, projects, collectors, and tokens
+- **Search Functions**: Provides comprehensive search capabilities for artists, collections, collectors, and tokens
+- **ENS Integration**: ENS name resolution with caching for Ethereum addresses
 - **URL Composition**: Helper functions for Art Blocks API endpoints (token, generator, media URLs)
 - **Selection System**: Handles complex multi-type selections (artist:name, project:name, collector:address, token:id) for slideshow queuing
 
 ### Application Routes
-1. **Home (`app/page.tsx`)**: Clean search interface with type selection (Token ID, Artist, Project, Collector)
+1. **Home (`app/page.tsx`)**: Clean search interface with type selection (Token ID, Artist, Collection, Collector)
 2. **Search Results (`app/search/page.tsx`)**: 
    - Displays search results based on type
    - Implements infinite scrolling for large result sets
@@ -39,8 +40,10 @@ This is a Next.js 15 application that creates an immersive Art Blocks NFT galler
 
 ### Key Features
 - **Art Blocks API Integration**: Direct integration with official Art Blocks GraphQL API and token endpoints
+- **ENS Support**: Comprehensive ENS name resolution with 24-hour caching for all Ethereum addresses
 - **Live Generator Display**: Uses Art Blocks' generator URLs to display actual generative art in real-time
-- **Selection-based Slideshows**: Users can build custom slideshows by selecting artists, projects, collectors, or individual tokens
+- **Selection-based Slideshows**: Users can build custom slideshows by selecting artists, collections, collectors, or individual tokens
+- **Art Blocks Links**: Direct navigation to Art Blocks collection pages, artist profiles, and collector profiles
 - **Responsive Design**: Works across desktop and mobile with careful attention to full-screen experiences
 
 ### Data Flow

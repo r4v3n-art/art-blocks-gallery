@@ -203,8 +203,8 @@ function SlideshowPlayer() {
       } else {
         await document.exitFullscreen()
       }
-    } catch (error) {
-      console.error('Fullscreen error:', error)
+    } catch {
+      // Fullscreen API may not be supported or permission denied
     }
   }, [])
 
