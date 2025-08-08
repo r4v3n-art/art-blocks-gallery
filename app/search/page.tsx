@@ -299,7 +299,7 @@ function SearchResults() {
       autoPlay: 'true',
       showInfo: 'true',
       randomOrder: 'false',
-      showBorder: 'false',
+      showBorder: 'true',
       fullscreen: 'true', // Start in fullscreen by default
     })
     router.push(`/gallery/player?${qs.toString()}`)

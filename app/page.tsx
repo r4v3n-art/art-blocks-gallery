@@ -39,7 +39,7 @@ export default function HomePage() {
       autoPlay: 'true',
       showInfo: 'true',
       randomOrder: 'true',
-      showBorder: 'false',
+      showBorder: 'true',
       fullscreen: 'true',
     })
     router.push(`/gallery/player?${qs.toString()}`)

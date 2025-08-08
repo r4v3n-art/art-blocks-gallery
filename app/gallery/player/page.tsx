@@ -37,6 +37,7 @@ function GalleryPlayer() {
   const [initializing, setInitializing] = useState(true)
   const [showBorderOverride, setShowBorderOverride] = useState<boolean | null>(null)
   const [isFullscreen, setIsFullscreen] = useState(false)
+  const [userExitedFullscreen, setUserExitedFullscreen] = useState(false)
   
   // Progressive loading states
   const [loadingProgress, setLoadingProgress] = useState({ loaded: 0, total: 0, percentage: 0 })
@@ -71,7 +72,7 @@ function GalleryPlayer() {
   const autoPlay = searchParams.get('autoPlay') === 'true'
   const showInfo = searchParams.get('showInfo') === 'true'
   const initialRandomOrder = searchParams.get('randomOrder') === 'true'
-  const showBorderFromUrl = searchParams.get('showBorder') === 'true'
+  const showBorderFromUrl = searchParams.get('showBorder') !== 'false' // Default to true
   const startFullscreen = searchParams.get('fullscreen') !== 'false' // Default to true
   
   // Use override if set, otherwise use URL param
@@ -503,6 +504,7 @@ function GalleryPlayer() {
     try {
       if (!document.fullscreenElement) {
         await document.documentElement.requestFullscreen()
+        setUserExitedFullscreen(false) // Reset the flag when user manually enters fullscreen
       } else {
         await document.exitFullscreen()
       }
@@ -514,7 +516,14 @@ function GalleryPlayer() {
   // Track fullscreen state changes
   useEffect(() => {
     const handleFullscreenChange = () => {
-      setIsFullscreen(!!document.fullscreenElement)
+      const wasFullscreen = isFullscreen
+      const nowFullscreen = !!document.fullscreenElement
+      setIsFullscreen(nowFullscreen)
+      
+      // If we were in fullscreen and now we're not, the user manually exited
+      if (wasFullscreen && !nowFullscreen) {
+        setUserExitedFullscreen(true)
+      }
     }
 
     document.addEventListener('fullscreenchange', handleFullscreenChange)
@@ -528,7 +537,7 @@ function GalleryPlayer() {
       document.removeEventListener('mozfullscreenchange', handleFullscreenChange)
       document.removeEventListener('MSFullscreenChange', handleFullscreenChange)
     }
-  }, [])
+  }, [isFullscreen])
 
   // Keyboard controls
   useKeyboardControls({
@@ -590,7 +599,8 @@ function GalleryPlayer() {
   
   // Auto-enter fullscreen on start if requested
   useEffect(() => {
-    if (currentNFT && startFullscreen && !isFullscreen && !document.fullscreenElement) {
+    // Only auto-enter fullscreen if user hasn't manually exited
+    if (currentNFT && startFullscreen && !isFullscreen && !document.fullscreenElement && !userExitedFullscreen) {
       // Small delay to ensure the page is fully loaded
       const timer = setTimeout(async () => {
         try {
@@ -602,7 +612,7 @@ function GalleryPlayer() {
       
       return () => clearTimeout(timer)
     }
-  }, [currentNFT, startFullscreen, isFullscreen])
+  }, [currentNFT, startFullscreen, isFullscreen, userExitedFullscreen])
 
 
   // Reset timer when duration changes
