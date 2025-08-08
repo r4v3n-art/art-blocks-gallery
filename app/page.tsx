@@ -34,10 +34,10 @@ export default function HomePage() {
         {/* Header */}
         <div className="text-center mb-16">
           <h1 className="text-5xl font-light text-gray-900 mb-4 tracking-tight">
-            Art Blocks
+            Art Blocks Gallery
           </h1>
           <p className="text-lg text-gray-600 font-light">
-            Generative Art Explorer
+            The best way to display your generative art collection
           </p>
         </div>
 
