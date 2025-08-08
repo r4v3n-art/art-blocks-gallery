@@ -439,11 +439,15 @@ function SlideshowPlayer() {
       >
         {/* Art Blocks Render Area with Optional Border */}
         <div className={`absolute inset-0 flex items-center justify-center ${showBorder ? 'p-8' : ''}`}>
-          <div className={`w-full h-full max-w-none max-h-none ${showBorder ? 'shadow-inner shadow-stone-200/80' : ''}`}>
+          <div className="w-full h-full max-w-none max-h-none">
+            {/* Artwork recessed into matte */}
             <iframe
               key={`${currentNFT.tokenId}-${showBorder}`} // Force re-render when token OR border changes
               src={currentNFT.generatorUrl}
-              className={`w-full h-full border-0 ${showBorder ? 'shadow-lg shadow-stone-400/20' : ''}`}
+              className="w-full h-full border-0"
+              style={showBorder ? {
+                boxShadow: 'inset 2px 2px 6px rgba(0,0,0,0.15), inset -1px -1px 3px rgba(255,255,255,0.7)'
+              } : undefined}
               title={`${currentNFT.projectName} #${currentNFT.tokenId}`}
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
               sandbox="allow-scripts allow-same-origin allow-forms"
