@@ -438,7 +438,7 @@ function SlideshowPlayer() {
         } : undefined}
       >
         {/* Art Blocks Render Area with Optional Border */}
-        <div className={`absolute inset-0 flex items-center justify-center ${showBorder ? 'p-8' : ''}`}>
+        <div className={`absolute inset-0 flex items-center justify-center ${showBorder ? 'p-10' : ''}`}>
           <div className="w-full h-full max-w-none max-h-none">
             {/* Artwork recessed into matte */}
             <iframe
