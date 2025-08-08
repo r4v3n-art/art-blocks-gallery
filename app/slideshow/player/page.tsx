@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useMemo, Suspense } from "react"
 import { tokensByIdWithLiveView, parseSelection, resolveSelectionToTokenEntries, type TokenEntry } from "@/lib/ab"
 import { useSearchParams, useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
+import { Slider } from "@/components/ui/slider"
 import { Play, Pause, SkipForward, SkipBack, X, Info, ChevronLeft, Shuffle, Maximize, Minimize } from 'lucide-react'
 import { truncateEthAddress } from "@/lib/utils"
 
@@ -35,8 +36,30 @@ function SlideshowPlayer() {
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [, setNextIframeLoaded] = useState(false)
   
+  // Duration state with exponential scale (5 seconds to 7 days)
+  const [durationSliderValue, setDurationSliderValue] = useState(() => {
+    const urlDuration = parseInt(searchParams.get('duration') || '5')
+    // Convert duration to slider value (0-100 scale)
+    return Math.round(Math.log(urlDuration / 5) / Math.log(604800 / 5) * 100)
+  })
+  
+  // Convert slider value (0-100) to duration in seconds (5s to 7 days)
+  const duration = useMemo(() => {
+    const min = 5 // 5 seconds
+    const max = 604800 // 7 days in seconds
+    const factor = durationSliderValue / 100
+    return Math.round(min * Math.pow(max / min, factor))
+  }, [durationSliderValue])
+  
+  // Format duration for display
+  const formatDuration = (seconds: number): string => {
+    if (seconds < 60) return `${seconds}s`
+    if (seconds < 3600) return `${Math.round(seconds / 60)}m`
+    if (seconds < 86400) return `${Math.round(seconds / 3600)}h`
+    return `${Math.round(seconds / 86400)}d`
+  }
+  
   // Settings from URL params
-  const duration = parseInt(searchParams.get('duration') || '5')
   const autoPlay = searchParams.get('autoPlay') === 'true'
   const showInfo = searchParams.get('showInfo') === 'true'
   const initialRandomOrder = searchParams.get('randomOrder') === 'true'
@@ -291,6 +314,13 @@ function SlideshowPlayer() {
     setNextIframeLoaded(false)
   }, [currentIndex])
 
+  // Reset timer when duration changes
+  useEffect(() => {
+    if (isPlaying && autoPlay && !isSingleItem) {
+      setTimeRemaining(duration)
+    }
+  }, [duration, isPlaying, autoPlay, isSingleItem])
+
   // When initializing, show a full-screen spinner before starting
   if (initializing) {
     return (
@@ -380,6 +410,27 @@ function SlideshowPlayer() {
                     <div className="pt-4 border-t border-gray-200">
                       <div className="text-sm text-gray-600 font-light">
                         Slide {currentIndex + 1} of {shuffledEntries.length}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Duration Control - Only show if more than 1 item and autoplay is on */}
+                  {!isSingleItem && autoPlay && (
+                    <div className="pt-4 border-t border-gray-200">
+                      <div className="text-sm text-gray-600 font-light mb-3">
+                        Duration: {formatDuration(duration)}
+                      </div>
+                      <Slider
+                        value={[durationSliderValue]}
+                        onValueChange={(value) => setDurationSliderValue(value[0])}
+                        max={100}
+                        min={0}
+                        step={1}
+                        className="w-full"
+                      />
+                      <div className="flex justify-between text-xs text-gray-500 mt-1">
+                        <span>5s</span>
+                        <span>7d</span>
                       </div>
                     </div>
                   )}
