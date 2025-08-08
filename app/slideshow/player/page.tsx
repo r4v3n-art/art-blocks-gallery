@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useMemo, Suspense } from "react"
 import { tokensByIdWithLiveView, parseSelection, resolveSelectionToTokenEntries, type TokenEntry } from "@/lib/ab"
 import { useSearchParams, useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
-import { Play, Pause, SkipForward, SkipBack, X, Info, ChevronLeft, Shuffle } from 'lucide-react'
+import { Play, Pause, SkipForward, SkipBack, X, Info, ChevronLeft, Shuffle, Maximize, Minimize } from 'lucide-react'
 import { truncateEthAddress } from "@/lib/utils"
 
 // Helper to detect if user is on Mac
@@ -32,6 +32,7 @@ function SlideshowPlayer() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [initializing, setInitializing] = useState(true)
   const [showBorderOverride, setShowBorderOverride] = useState<boolean | null>(null)
+  const [isFullscreen, setIsFullscreen] = useState(false)
   
   // Settings from URL params
   const duration = parseInt(searchParams.get('duration') || '5')
@@ -166,6 +167,37 @@ function SlideshowPlayer() {
     setShowBorderOverride(prev => prev === null ? !showBorderFromUrl : !prev)
   }, [showBorderFromUrl])
 
+  const toggleFullscreen = useCallback(async () => {
+    try {
+      if (!document.fullscreenElement) {
+        await document.documentElement.requestFullscreen()
+      } else {
+        await document.exitFullscreen()
+      }
+    } catch (error) {
+      console.error('Fullscreen error:', error)
+    }
+  }, [])
+
+  // Track fullscreen state changes
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement)
+    }
+
+    document.addEventListener('fullscreenchange', handleFullscreenChange)
+    document.addEventListener('webkitfullscreenchange', handleFullscreenChange)
+    document.addEventListener('mozfullscreenchange', handleFullscreenChange)
+    document.addEventListener('MSFullscreenChange', handleFullscreenChange)
+
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullscreenChange)
+      document.removeEventListener('webkitfullscreenchange', handleFullscreenChange)
+      document.removeEventListener('mozfullscreenchange', handleFullscreenChange)
+      document.removeEventListener('MSFullscreenChange', handleFullscreenChange)
+    }
+  }, [])
+
   // Keyboard controls
   useEffect(() => {
     const handleKeyPress = (e: KeyboardEvent) => {
@@ -203,12 +235,17 @@ function SlideshowPlayer() {
             toggleBorder()
           }
           break
+        case 'f':
+        case 'F':
+          e.preventDefault()
+          toggleFullscreen()
+          break
       }
     }
 
     window.addEventListener('keydown', handleKeyPress)
     return () => window.removeEventListener('keydown', handleKeyPress)
-  }, [nextSlide, prevSlide, togglePlayPause, exitSlideshow, toggleSidebar, toggleShuffle, toggleBorder, isSingleItem])
+  }, [nextSlide, prevSlide, togglePlayPause, exitSlideshow, toggleSidebar, toggleShuffle, toggleBorder, toggleFullscreen, isSingleItem])
 
   // Convert current entry to NFTMeta format
   const currentNFT = useMemo<NFTMeta | null>(() => {
@@ -368,6 +405,10 @@ function SlideshowPlayer() {
                             <span className="text-gray-600 font-light">Toggle Border</span>
                             <kbd className="px-2 py-1 bg-gray-200 text-gray-700 font-mono">{isMac ? '⌘B' : 'Ctrl+B'}</kbd>
                           </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-600 font-light">Fullscreen</span>
+                            <kbd className="px-2 py-1 bg-gray-200 text-gray-700 font-mono">F</kbd>
+                          </div>
                         </>
                       )}
                       <div className="flex justify-between">
@@ -442,7 +483,7 @@ function SlideshowPlayer() {
           <div className="w-full h-full max-w-none max-h-none">
             {/* Artwork recessed into matte */}
             <iframe
-              key={`${currentNFT.tokenId}-${showBorder}`} // Force re-render when token OR border changes
+              key={`${currentNFT.tokenId}-${showBorder}-${isFullscreen}`} // Force re-render when token, border, OR fullscreen changes
               src={currentNFT.generatorUrl}
               className="w-full h-full border-0"
               style={showBorder ? {
@@ -545,7 +586,7 @@ function SlideshowPlayer() {
                         variant="ghost"
                         size="icon"
                         onClick={toggleShuffle}
-                        className={`${isShuffled ? 'bg-gray-200' : ''} text-gray-900 hover:bg-gray-100 ml-2`}
+                        className={`${isShuffled ? 'bg-gray-200' : ''} text-gray-900 hover:bg-gray-100`}
                         title={isShuffled ? "Shuffle is on" : "Shuffle is off"}
                       >
                         <Shuffle className="w-5 h-5" />
@@ -558,12 +599,23 @@ function SlideshowPlayer() {
                       variant="ghost"
                       size="icon"
                       onClick={toggleSidebar}
-                      className="text-gray-900 hover:bg-gray-100 ml-4"
+                      className="text-gray-900 hover:bg-gray-100"
                       title="Show sidebar (⌘I)"
                     >
                       <Info className="w-5 h-5" />
                     </Button>
                   )}
+
+                  {/* Fullscreen toggle */}
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={toggleFullscreen}
+                    className="text-gray-900 hover:bg-gray-100"
+                    title={isFullscreen ? "Exit fullscreen (F)" : "Enter fullscreen (F)"}
+                  >
+                    {isFullscreen ? <Minimize className="w-5 h-5" /> : <Maximize className="w-5 h-5" />}
+                  </Button>
 
                   {/* Exit button when no other controls shown */}
                   {isSingleItem && (
