@@ -308,119 +308,145 @@ function SearchResults() {
     return () => { cancelled = true }
   }, [cart])
 
+  // Debounced search effect
   useEffect(() => {
     const controller = new AbortController()
-
-    const searchNFTs = async () => {
-      setLoading(true)
-      try {
-        setVisibleCount(24)
-        setMetadataMap({})
-        setArtistList([])
-        setProjectList([])
-        setCollectorList([])
-        if (searchType === 'token') {
-          const rawIds = searchQuery.split(/[\s,]+/).map((s) => s.trim()).filter(Boolean)
-          const tokenIds = Array.from(new Set(rawIds))
-          setTokenRefs(tokenIds.map((id) => ({ tokenId: id })))
-        } else if (searchType === 'artist') {
-          // Show artist search results, not tokens
-          setTokenRefs([])
-          const term = searchQuery.trim()
-          if (!term) {
-            setArtistList([])
-          } else {
-            const names = await searchArtistsDistinct(term)
-            if (!Array.isArray(names) || names.length === 0) {
+    
+    // Debounce search by 300ms, except for token type (immediate)
+    const delay = searchType === 'token' ? 0 : 300
+    
+    const timeoutId = setTimeout(() => {
+      const searchNFTs = async () => {
+        if (controller.signal.aborted) return
+        
+        setLoading(true)
+        try {
+          setVisibleCount(24)
+          setMetadataMap({})
+          setArtistList([])
+          setProjectList([])
+          setCollectorList([])
+          
+          if (searchType === 'token') {
+            const rawIds = searchQuery.split(/[\s,]+/).map((s) => s.trim()).filter(Boolean)
+            const tokenIds = Array.from(new Set(rawIds))
+            setTokenRefs(tokenIds.map((id) => ({ tokenId: id })))
+          } else if (searchType === 'artist') {
+            // Show artist search results, not tokens
+            setTokenRefs([])
+            const term = searchQuery.trim()
+            if (!term) {
               setArtistList([])
             } else {
-              // fetch counts per artist
-              const counts: number[] = []
-              for (const n of names) {
-                const q = `
-                  query CountByArtist($name: String!) {
-                    tokens_metadata_aggregate(where: { project: { artist_name: { _eq: $name } } }) { aggregate { count } }
-                  }
-                `
-                const d = await graphqlRequest<{ tokens_metadata_aggregate?: { aggregate?: { count?: number } } }>(q, { name: n })
-                const c = d?.tokens_metadata_aggregate?.aggregate?.count
-                counts.push(typeof c === 'number' ? c : 0)
+              const names = await searchArtistsDistinct(term)
+              if (controller.signal.aborted) return
+              
+              if (!Array.isArray(names) || names.length === 0) {
+                setArtistList([])
+              } else {
+                // fetch counts per artist
+                const counts: number[] = []
+                for (const n of names) {
+                  if (controller.signal.aborted) return
+                  const q = `
+                    query CountByArtist($name: String!) {
+                      tokens_metadata_aggregate(where: { project: { artist_name: { _eq: $name } } }) { aggregate { count } }
+                    }
+                  `
+                  const d = await graphqlRequest<{ tokens_metadata_aggregate?: { aggregate?: { count?: number } } }>(q, { name: n })
+                  const c = d?.tokens_metadata_aggregate?.aggregate?.count
+                  counts.push(typeof c === 'number' ? c : 0)
+                }
+                if (!controller.signal.aborted) {
+                  setArtistList(names.map((n, i) => ({ name: n, total: counts[i] || 0 })))
+                }
               }
-              setArtistList(names.map((n, i) => ({ name: n, total: counts[i] || 0 })))
             }
-          }
-        } else if (searchType === 'project') {
-          setTokenRefs([])
-          const q = `
-            query ProjectsByName($value: String!) {
-              projects_metadata(where: { name: { _ilike: $value } }, order_by: { name: asc }) {
-                name
-                artist_name
-                invocations
-              }
-            }
-          `
-          const data = await graphqlRequest<{ projects_metadata?: Array<Record<string, unknown>> }>(q, { value: `%${searchQuery}%` })
-          const list = data?.projects_metadata
-          if (Array.isArray(list)) {
-            const mapped = list.map((p) => ({
-              name: typeof p?.name === 'string' ? (p.name as string) : '',
-              artist: typeof p?.artist_name === 'string' ? (p.artist_name as string) : null,
-              total: typeof p?.invocations === 'number' ? (p.invocations as number) : 0,
-            })).filter(p => p.name)
-            setProjectList(mapped)
-          } else {
-            setProjectList([])
-          }
-        } else if (searchType === 'collector') {
-          setTokenRefs([])
-          const term = searchQuery.trim()
-          if (!term) {
-            setCollectorList([])
-          } else {
-            const uq = `
-              query U($value: String!) {
-                users(where: { _or: [
-                  { display_name: { _ilike: $value } },
-                  { public_address: { _ilike: $value } }
-                ] }, order_by: { display_name: asc }) {
-                  display_name
-                  public_address
+          } else if (searchType === 'project') {
+            setTokenRefs([])
+            const q = `
+              query ProjectsByName($value: String!) {
+                projects_metadata(where: { name: { _ilike: $value } }, order_by: { name: asc }) {
+                  name
+                  artist_name
+                  invocations
                 }
               }
             `
-            const ures = await graphqlRequest<{ users?: Array<Record<string, unknown>> }>(uq, { value: `%${term}%` })
-            const users = ures?.users
-            if (Array.isArray(users) && users.length > 0) {
-              const result: Array<{ address: string; displayName?: string | null; total: number }> = []
-              for (const u of users) {
-                const address = typeof u?.public_address === 'string' ? (u.public_address as string).toLowerCase() : ''
-                if (!address) continue
-                const displayName = typeof u?.display_name === 'string' ? (u.display_name as string) : null
-                const cq = `
-                  query C($owner: String!) { tokens_metadata_aggregate(where: { owner_address: { _eq: $owner } }) { aggregate { count } } }
-                `
-                const cres = await graphqlRequest<{ tokens_metadata_aggregate?: { aggregate?: { count?: number } } }>(cq, { owner: address })
-                const cnt = cres?.tokens_metadata_aggregate?.aggregate?.count
-                result.push({ address, displayName, total: typeof cnt === 'number' ? cnt : 0 })
-              }
-              setCollectorList(result)
+            const data = await graphqlRequest<{ projects_metadata?: Array<Record<string, unknown>> }>(q, { value: `%${searchQuery}%` })
+            if (controller.signal.aborted) return
+            
+            const list = data?.projects_metadata
+            if (Array.isArray(list)) {
+              const mapped = list.map((p) => ({
+                name: typeof p?.name === 'string' ? (p.name as string) : '',
+                artist: typeof p?.artist_name === 'string' ? (p.artist_name as string) : null,
+                total: typeof p?.invocations === 'number' ? (p.invocations as number) : 0,
+              })).filter(p => p.name)
+              setProjectList(mapped)
             } else {
-              setCollectorList([])
+              setProjectList([])
             }
+          } else if (searchType === 'collector') {
+            setTokenRefs([])
+            const term = searchQuery.trim()
+            if (!term) {
+              setCollectorList([])
+            } else {
+              const uq = `
+                query U($value: String!) {
+                  users(where: { _or: [
+                    { display_name: { _ilike: $value } },
+                    { public_address: { _ilike: $value } }
+                  ] }, order_by: { display_name: asc }) {
+                    display_name
+                    public_address
+                  }
+                }
+              `
+              const ures = await graphqlRequest<{ users?: Array<Record<string, unknown>> }>(uq, { value: `%${term}%` })
+              if (controller.signal.aborted) return
+              
+              const users = ures?.users
+              if (Array.isArray(users) && users.length > 0) {
+                const result: Array<{ address: string; displayName?: string | null; total: number }> = []
+                for (const u of users) {
+                  if (controller.signal.aborted) return
+                  const address = typeof u?.public_address === 'string' ? (u.public_address as string).toLowerCase() : ''
+                  if (!address) continue
+                  const displayName = typeof u?.display_name === 'string' ? (u.display_name as string) : null
+                  const cq = `
+                    query C($owner: String!) { tokens_metadata_aggregate(where: { owner_address: { _eq: $owner } }) { aggregate { count } } }
+                  `
+                  const cres = await graphqlRequest<{ tokens_metadata_aggregate?: { aggregate?: { count?: number } } }>(cq, { owner: address })
+                  if (controller.signal.aborted) return
+                  const cnt = cres?.tokens_metadata_aggregate?.aggregate?.count
+                  result.push({ address, displayName, total: typeof cnt === 'number' ? cnt : 0 })
+                }
+                setCollectorList(result)
+              } else {
+                setCollectorList([])
+              }
+            }
+          } else {
+            setTokenRefs([])
+            setProjectList([])
+            setCollectorList([])
           }
-        } else {
-          setTokenRefs([])
-          setProjectList([])
-          setCollectorList([])
+        } finally {
+          if (!controller.signal.aborted) {
+            setLoading(false)
+          }
         }
-      } finally {
-        setLoading(false)
       }
-    }
 
-    searchNFTs()
-    return () => controller.abort()
+      searchNFTs()
+    }, delay)
+
+    return () => {
+      clearTimeout(timeoutId)
+      controller.abort()
+    }
   }, [searchType, searchQuery])
 
   // Fetch metadata for visible range lazily

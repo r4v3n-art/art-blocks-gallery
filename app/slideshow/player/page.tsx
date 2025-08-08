@@ -33,6 +33,7 @@ function SlideshowPlayer() {
   const [initializing, setInitializing] = useState(true)
   const [showBorderOverride, setShowBorderOverride] = useState<boolean | null>(null)
   const [isFullscreen, setIsFullscreen] = useState(false)
+  const [, setNextIframeLoaded] = useState(false)
   
   // Settings from URL params
   const duration = parseInt(searchParams.get('duration') || '5')
@@ -87,6 +88,7 @@ function SlideshowPlayer() {
   }, [tokenEntries, isShuffled])
 
   const currentEntry = shuffledEntries[currentIndex]
+  const nextEntry = shuffledEntries.length > 1 ? shuffledEntries[(currentIndex + 1) % shuffledEntries.length] : null
   const isSingleItem = shuffledEntries.length === 1
 
   // Timer for auto-advance (only if more than 1 item)
@@ -262,12 +264,32 @@ function SlideshowPlayer() {
     }
   }, [currentEntry])
 
+  // Convert next entry to NFTMeta format for preloading
+  const nextNFT = useMemo<NFTMeta | null>(() => {
+    if (!nextEntry) return null
+    return {
+      tokenId: nextEntry.tokenId,
+      projectName: nextEntry.projectName,
+      artist: nextEntry.artistName,
+      contractAddress: nextEntry.contractAddress,
+      generatorUrl: nextEntry.generatorUrl,
+      imageUrl: nextEntry.imageUrl,
+      owner: nextEntry.owner,
+      invocation: nextEntry.invocation,
+    }
+  }, [nextEntry])
+
   // Auto-start playing once loaded
   useEffect(() => {
     if (currentNFT && !isPlaying && autoPlay) {
       setIsPlaying(true)
     }
   }, [currentNFT, autoPlay, isPlaying])
+
+  // Reset next iframe loaded state when moving to next slide
+  useEffect(() => {
+    setNextIframeLoaded(false)
+  }, [currentIndex])
 
   // When initializing, show a full-screen spinner before starting
   if (initializing) {
@@ -480,10 +502,10 @@ function SlideshowPlayer() {
       >
         {/* Art Blocks Render Area with Optional Border */}
         <div className={`absolute inset-0 flex items-center justify-center ${showBorder ? 'p-10' : ''}`}>
-          <div className="w-full h-full max-w-none max-h-none">
-            {/* Artwork recessed into matte */}
+          <div className="w-full h-full max-w-none max-h-none relative">
+            {/* Current artwork iframe */}
             <iframe
-              key={`${currentNFT.tokenId}-${showBorder}-${isFullscreen}`} // Force re-render when token, border, OR fullscreen changes
+              key={`current-${currentNFT.tokenId}-${showBorder}-${isFullscreen}`}
               src={currentNFT.generatorUrl}
               className="w-full h-full border-0"
               style={showBorder ? {
@@ -492,8 +514,28 @@ function SlideshowPlayer() {
               title={`${currentNFT.projectName} #${currentNFT.tokenId}`}
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
               sandbox="allow-scripts allow-same-origin allow-forms"
-              loading="lazy"
+              loading="eager"
             />
+            
+            {/* Preload next iframe (hidden) */}
+            {nextNFT && (
+              <iframe
+                key={`next-${nextNFT.tokenId}-${showBorder}-${isFullscreen}`}
+                src={nextNFT.generatorUrl}
+                className="absolute inset-0 w-full h-full border-0 opacity-0 pointer-events-none"
+                style={{
+                  zIndex: -1,
+                  ...(showBorder ? {
+                    boxShadow: 'inset 2px 2px 6px rgba(0,0,0,0.15), inset -1px -1px 3px rgba(255,255,255,0.7)'
+                  } : {})
+                }}
+                title={`Preloading: ${nextNFT.projectName} #${nextNFT.tokenId}`}
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                sandbox="allow-scripts allow-same-origin allow-forms"
+                loading="eager"
+                onLoad={() => setNextIframeLoaded(true)}
+              />
+            )}
           </div>
         </div>
 

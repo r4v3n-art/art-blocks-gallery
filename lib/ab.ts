@@ -6,22 +6,71 @@ export const AB_GQL_ENDPOINT = "https://artblocks-mainnet.hasura.app/v1/graphql"
 // Placeholder/invalid engine address occasionally seen in bad rows
 const ZERO_ENGINE_ADDRESS = "0x00000000e75eadc620f4fcefab32f5173749c3a4"
 
+// Simple in-memory cache for GraphQL requests
+type CacheEntry<T> = {
+  data: T | null
+  timestamp: number
+  ttl: number
+}
+
+const requestCache = new Map<string, CacheEntry<unknown>>()
+const CACHE_TTL = 5 * 60 * 1000 // 5 minutes
+const pending = new Map<string, Promise<unknown>>()
+
+function getCacheKey(query: string, variables: Record<string, unknown>): string {
+  return JSON.stringify({ query: query.replace(/\s+/g, ' ').trim(), variables })
+}
+
+function isExpired<T>(entry: CacheEntry<T>): boolean {
+  return Date.now() - entry.timestamp > entry.ttl
+}
+
 export async function graphqlRequest<T = unknown>(query: string, variables: Record<string, unknown>): Promise<T | null> {
-  try {
-    const res = await fetch(AB_GQL_ENDPOINT, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ query, variables }),
-    })
-    if (!res.ok) return null
-    const json = (await res.json()) as Record<string, unknown>
-    if (json && typeof json === "object" && "data" in json) {
-      return (json as { data: T }).data
-    }
-    return null
-  } catch {
-    return null
+  const cacheKey = getCacheKey(query, variables)
+  
+  // Check cache first
+  const cached = requestCache.get(cacheKey) as CacheEntry<T> | undefined
+  if (cached && !isExpired(cached)) {
+    return cached.data
   }
+  
+  // Check if request is already pending (deduplication)
+  const pendingRequest = pending.get(cacheKey) as Promise<T | null> | undefined
+  if (pendingRequest) {
+    return pendingRequest
+  }
+  
+  // Make new request
+  const requestPromise = (async (): Promise<T | null> => {
+    try {
+      const res = await fetch(AB_GQL_ENDPOINT, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ query, variables }),
+      })
+      if (!res.ok) return null
+      const json = (await res.json()) as Record<string, unknown>
+      const data = json && typeof json === "object" && "data" in json 
+        ? (json as { data: T }).data 
+        : null
+      
+      // Cache the result
+      requestCache.set(cacheKey, {
+        data,
+        timestamp: Date.now(),
+        ttl: CACHE_TTL
+      })
+      
+      return data
+    } catch {
+      return null
+    } finally {
+      pending.delete(cacheKey)
+    }
+  })()
+  
+  pending.set(cacheKey, requestPromise)
+  return requestPromise
 }
 
 function wrapIlike(term: string): string {
