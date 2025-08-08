@@ -8,7 +8,7 @@ import { Play, Pause, SkipForward, SkipBack, X, Info, ChevronLeft, Shuffle } fro
 import { truncateEthAddress } from "@/lib/utils"
 
 // Helper to detect if user is on Mac
-const isMac = typeof window !== 'undefined' && navigator.platform.toUpperCase().indexOf('MAC') >= 0
+const isMac = typeof window !== 'undefined' && navigator.userAgent.toUpperCase().indexOf('MAC') >= 0
 
 type NFTMeta = {
   tokenId: string
@@ -430,10 +430,10 @@ function SlideshowPlayer() {
       )}
 
       {/* Main Art Display Area */}
-      <div className="flex-1 relative bg-gray-100">
+      <div className={`flex-1 relative ${showBorder ? 'bg-white' : 'bg-gray-100'}`}>
         {/* Art Blocks Render Area with Optional Border */}
         <div className={`absolute inset-0 flex items-center justify-center ${showBorder ? 'p-8' : ''}`}>
-          <div className={`w-full h-full ${showBorder ? 'border-8 border-white shadow-lg' : ''}`}>
+          <div className="w-full h-full max-w-none max-h-none">
             <iframe
               key={currentNFT.tokenId} // Force re-render when token changes
               src={currentNFT.generatorUrl}
