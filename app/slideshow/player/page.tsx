@@ -4,7 +4,8 @@ import { useState, useEffect, useCallback, useMemo, Suspense } from "react"
 import { tokensByIdWithLiveView, parseSelection, resolveSelectionToTokenEntries, type TokenEntry } from "@/lib/ab"
 import { useSearchParams, useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
-import { Play, Pause, SkipForward, SkipBack, X, Info, ChevronLeft, ChevronRight, Shuffle } from 'lucide-react'
+import { Play, Pause, SkipForward, SkipBack, X, Info, ChevronLeft, Shuffle } from 'lucide-react'
+import { truncateEthAddress } from "@/lib/utils"
 
 type NFTMeta = {
   tokenId: string
@@ -13,6 +14,7 @@ type NFTMeta = {
   contractAddress?: string
   generatorUrl: string
   imageUrl?: string
+  owner?: string
 }
 
 function SlideshowPlayer() {
@@ -96,9 +98,13 @@ function SlideshowPlayer() {
     return () => clearInterval(interval)
   }, [currentIndex, isPlaying, autoPlay, duration, isSingleItem, shuffledEntries.length])
 
-  // Hide controls after inactivity (only if more than 1 item)
+  // Hide controls after inactivity (when sidebar is collapsed or hidden)
   useEffect(() => {
-    if (isSingleItem) return
+    // Show controls always when sidebar is expanded, or when single item
+    if ((showInfo && !sidebarCollapsed) || isSingleItem) {
+      setShowControls(true)
+      return
+    }
 
     let timeout: NodeJS.Timeout
     
@@ -117,7 +123,7 @@ function SlideshowPlayer() {
       clearTimeout(timeout)
       window.removeEventListener('mousemove', handleMouseMove)
     }
-  }, [isSingleItem])
+  }, [isSingleItem, showInfo, sidebarCollapsed])
 
   const nextSlide = useCallback(() => {
     if (isSingleItem) return
@@ -195,6 +201,7 @@ function SlideshowPlayer() {
       contractAddress: currentEntry.contractAddress,
       generatorUrl: currentEntry.generatorUrl,
       imageUrl: currentEntry.imageUrl,
+      owner: currentEntry.owner,
     }
   }, [currentEntry])
 
@@ -242,53 +249,32 @@ function SlideshowPlayer() {
 
   return (
     <div className="fixed inset-0 bg-white overflow-hidden flex">
-      {/* Information Sidebar - Collapsible when showInfo is true */}
-      {showInfo && (
-        <div className={`bg-gray-50 border-r border-gray-200 flex flex-col transition-all duration-300 ease-in-out ${
-          sidebarCollapsed ? 'w-12' : 'w-80'
-        }`}>
+      {/* Information Sidebar - Completely hidden when collapsed */}
+      {showInfo && !sidebarCollapsed && (
+        <div className="w-80 bg-gray-50 border-r border-gray-200 flex flex-col">
           {/* Sidebar Header with Toggle */}
           <div className="p-6 border-b border-gray-200 flex items-center justify-between">
-            {!sidebarCollapsed ? (
-              <>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={exitSlideshow}
-                  className="text-gray-600 hover:text-gray-900 font-light"
-                >
-                  ← Exit Slideshow
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={toggleSidebar}
-                  className="text-gray-600 hover:text-gray-900"
-                  title="Hide sidebar (⌘I)"
-                >
-                  <ChevronLeft className="w-4 h-4" />
-                </Button>
-              </>
-            ) : (
-              <div className="w-full flex justify-center">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={toggleSidebar}
-                  className="text-gray-600 hover:text-gray-900"
-                  title="Show sidebar (⌘I)"
-                >
-                  <ChevronRight className="w-4 h-4" />
-                </Button>
-              </div>
-            )}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={exitSlideshow}
+              className="text-gray-600 hover:text-gray-900 font-light"
+            >
+              ← Exit Slideshow
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={toggleSidebar}
+              className="text-gray-600 hover:text-gray-900"
+              title="Hide sidebar (⌘I)"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </Button>
           </div>
 
-          {/* Sidebar Content - Hidden when collapsed */}
-          {!sidebarCollapsed && (
-            <>
-              {/* Token Information */}
-              <div className="p-6 flex-1">
+          {/* Token Information */}
+          <div className="p-6 flex-1">
                 <div className="space-y-6">
                   <div>
                     <h2 className="text-2xl font-light text-gray-900 mb-2">
@@ -297,8 +283,16 @@ function SlideshowPlayer() {
                     <p className="text-gray-600 font-light text-lg mb-4">
                       {currentNFT.artist}
                     </p>
-                    <div className="text-sm text-gray-500 font-mono">
-                      #{currentNFT.tokenId}
+                    <div className="space-y-2">
+                      <div className="text-sm text-gray-500 font-mono">
+                        #{currentNFT.tokenId}
+                      </div>
+                      {currentNFT.owner && (
+                        <div className="text-sm text-gray-500">
+                          <span className="font-light">Collected by </span>
+                          <span className="font-mono">{truncateEthAddress(currentNFT.owner)}</span>
+                        </div>
+                      )}
                     </div>
                   </div>
 
@@ -408,58 +402,6 @@ function SlideshowPlayer() {
                   </div>
                 </div>
               )}
-            </>
-          )}
-
-          {/* Collapsed Sidebar Controls - Only show if more than 1 item */}
-          {sidebarCollapsed && !isSingleItem && (
-            <div className="flex-1 flex flex-col items-center justify-center gap-4">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={prevSlide}
-                className="text-gray-900 hover:bg-gray-200"
-                title="Previous"
-              >
-                <SkipBack className="w-4 h-4" />
-              </Button>
-            
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={togglePlayPause}
-                className="text-gray-900 hover:bg-gray-200"
-                title={isPlaying ? "Pause" : "Play"}
-              >
-                {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
-              </Button>
-            
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={nextSlide}
-                className="text-gray-900 hover:bg-gray-200"
-                title="Next"
-              >
-                <SkipForward className="w-4 h-4" />
-              </Button>
-              
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={toggleShuffle}
-                className={`${isShuffled ? 'text-gray-900 bg-gray-200' : 'text-gray-900'} hover:bg-gray-200`}
-                title={isShuffled ? "Shuffle is on" : "Shuffle is off"}
-              >
-                <Shuffle className="w-4 h-4" />
-              </Button>
-
-              {/* Slide indicator in collapsed mode */}
-              <div className="text-xs text-gray-600 font-light transform -rotate-90 whitespace-nowrap mt-8">
-                {currentIndex + 1}/{shuffledEntries.length}
-              </div>
-            </div>
-          )}
         </div>
       )}
 
@@ -480,8 +422,8 @@ function SlideshowPlayer() {
           </div>
         </div>
 
-        {/* Overlay Controls (only when sidebar is hidden and more than 1 item) */}
-        {!showInfo && !isSingleItem && (
+        {/* Overlay Controls (when sidebar is hidden or collapsed) */}
+        {(!showInfo || sidebarCollapsed) && (
           <>
             {/* Progress Bar - Only show with overlay and autoplay */}
             {autoPlay && isPlaying && (
@@ -505,10 +447,30 @@ function SlideshowPlayer() {
             </Button>
 
             <div className={`absolute top-8 left-8 transition-opacity duration-300 ${showControls ? 'opacity-100' : 'opacity-0'} z-20`}>
-              <div className="bg-white/95 backdrop-blur-sm border border-gray-200 px-4 py-2">
-                <span className="text-gray-900 font-light text-sm">
-                  {currentIndex + 1} / {shuffledEntries.length}
-                </span>
+              <div className="bg-white/95 backdrop-blur-sm border border-gray-200 px-4 py-3 max-w-sm">
+                {showInfo && sidebarCollapsed ? (
+                  <div className="space-y-2">
+                    <div className="text-gray-900 font-light text-lg">
+                      {currentNFT.projectName}
+                    </div>
+                    <div className="text-gray-600 font-light text-sm">
+                      {currentNFT.artist}
+                    </div>
+                    <div className="text-gray-500 font-mono text-xs">
+                      #{currentNFT.tokenId} • {currentIndex + 1}/{shuffledEntries.length}
+                    </div>
+                    {currentNFT.owner && (
+                      <div className="text-gray-500 text-xs">
+                        <span className="font-light">Collected by </span>
+                        <span className="font-mono">{truncateEthAddress(currentNFT.owner)}</span>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <span className="text-gray-900 font-light text-sm">
+                    {currentIndex + 1} / {shuffledEntries.length}
+                  </span>
+                )}
               </div>
             </div>
 
@@ -516,42 +478,46 @@ function SlideshowPlayer() {
             <div className={`absolute bottom-0 left-0 right-0 transition-opacity duration-300 ${showControls ? 'opacity-100' : 'opacity-0'} z-20`}>
               <div className="bg-white/95 backdrop-blur-sm border-t border-gray-200 p-6">
                 <div className="flex items-center justify-center gap-4">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={prevSlide}
-                    className="text-gray-900 hover:bg-gray-100"
-                  >
-                    <SkipBack className="w-5 h-5" />
-                  </Button>
-                
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={togglePlayPause}
-                    className="text-gray-900 hover:bg-gray-100"
-                  >
-                    {isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
-                  </Button>
-                
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={nextSlide}
-                    className="text-gray-900 hover:bg-gray-100"
-                  >
-                    <SkipForward className="w-5 h-5" />
-                  </Button>
-                  
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={toggleShuffle}
-                    className={`${isShuffled ? 'bg-gray-200' : ''} text-gray-900 hover:bg-gray-100 ml-2`}
-                    title={isShuffled ? "Shuffle is on" : "Shuffle is off"}
-                  >
-                    <Shuffle className="w-5 h-5" />
-                  </Button>
+                  {!isSingleItem && (
+                    <>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={prevSlide}
+                        className="text-gray-900 hover:bg-gray-100"
+                      >
+                        <SkipBack className="w-5 h-5" />
+                      </Button>
+                    
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={togglePlayPause}
+                        className="text-gray-900 hover:bg-gray-100"
+                      >
+                        {isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
+                      </Button>
+                    
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={nextSlide}
+                        className="text-gray-900 hover:bg-gray-100"
+                      >
+                        <SkipForward className="w-5 h-5" />
+                      </Button>
+                      
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={toggleShuffle}
+                        className={`${isShuffled ? 'bg-gray-200' : ''} text-gray-900 hover:bg-gray-100 ml-2`}
+                        title={isShuffled ? "Shuffle is on" : "Shuffle is off"}
+                      >
+                        <Shuffle className="w-5 h-5" />
+                      </Button>
+                    </>
+                  )}
 
                   {showInfo && sidebarCollapsed && (
                     <Button
@@ -564,9 +530,22 @@ function SlideshowPlayer() {
                       <Info className="w-5 h-5" />
                     </Button>
                   )}
+
+                  {/* Exit button when no other controls shown */}
+                  {isSingleItem && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={exitSlideshow}
+                      className="text-gray-900 hover:bg-gray-100"
+                      title="Exit slideshow"
+                    >
+                      <X className="w-5 h-5" />
+                    </Button>
+                  )}
                 </div>
                 
-                {autoPlay && (
+                {autoPlay && !isSingleItem && (
                   <div className="text-center mt-3 text-gray-600 text-sm font-light">
                     {isPlaying ? `Next in ${timeRemaining}s` : 'Paused'}
                   </div>
@@ -576,17 +555,6 @@ function SlideshowPlayer() {
           </>
         )}
 
-        {/* Simple exit button for single items when no sidebar */}
-        {!showInfo && isSingleItem && (
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={exitSlideshow}
-            className="absolute top-8 right-8 text-gray-900 hover:bg-gray-100 z-20"
-          >
-            <X className="w-5 h-5" />
-          </Button>
-        )}
       </div>
     </div>
   )
