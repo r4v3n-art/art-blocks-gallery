@@ -17,6 +17,11 @@ const requestCache = new Map<string, CacheEntry<unknown>>()
 const CACHE_TTL = 5 * 60 * 1000 // 5 minutes
 const pending = new Map<string, Promise<unknown>>()
 
+// ENS resolution cache with 24-hour TTL
+const ensCache = new Map<string, CacheEntry<string>>()
+const ENS_CACHE_TTL = 24 * 60 * 60 * 1000 // 24 hours
+const ensPending = new Map<string, Promise<string | null>>()
+
 function getCacheKey(query: string, variables: Record<string, unknown>): string {
   return JSON.stringify({ query: query.replace(/\s+/g, ' ').trim(), variables })
 }
@@ -75,6 +80,116 @@ export async function graphqlRequest<T = unknown>(query: string, variables: Reco
 
 function wrapIlike(term: string): string {
   return `%${term}%`
+}
+
+// ENS utility functions
+function isEnsName(name: string): boolean {
+  return name.endsWith('.eth') || name.includes('.eth.')
+}
+
+function isEthAddress(address: string): boolean {
+  return /^0x[a-fA-F0-9]{40}$/.test(address)
+}
+
+// Resolve ENS name to address
+export async function resolveEnsToAddress(ensName: string): Promise<string | null> {
+  if (!isEnsName(ensName)) return null
+  
+  const cacheKey = `ens-to-addr:${ensName.toLowerCase()}`
+  
+  // Check cache first
+  const cached = ensCache.get(cacheKey)
+  if (cached && !isExpired(cached)) {
+    return cached.data
+  }
+  
+  // Check if request is already pending
+  const pendingRequest = ensPending.get(cacheKey)
+  if (pendingRequest) {
+    return pendingRequest
+  }
+  
+  // Make new ENS resolution request
+  const requestPromise = (async (): Promise<string | null> => {
+    try {
+      // Use public ENS resolver endpoint
+      const response = await fetch(`https://ensdata.net/${ensName}`)
+      if (!response.ok) return null
+      
+      const data = await response.json()
+      const address = data?.address
+      
+      if (typeof address === 'string' && isEthAddress(address)) {
+        // Cache the result
+        ensCache.set(cacheKey, {
+          data: address.toLowerCase(),
+          timestamp: Date.now(),
+          ttl: ENS_CACHE_TTL
+        })
+        return address.toLowerCase()
+      }
+      
+      return null
+    } catch {
+      return null
+    } finally {
+      ensPending.delete(cacheKey)
+    }
+  })()
+  
+  ensPending.set(cacheKey, requestPromise)
+  return requestPromise
+}
+
+// Resolve address to ENS name
+export async function resolveAddressToEns(address: string): Promise<string | null> {
+  if (!isEthAddress(address)) return null
+  
+  const cacheKey = `addr-to-ens:${address.toLowerCase()}`
+  
+  // Check cache first
+  const cached = ensCache.get(cacheKey)
+  if (cached && !isExpired(cached)) {
+    return cached.data
+  }
+  
+  // Check if request is already pending
+  const pendingRequest = ensPending.get(cacheKey)
+  if (pendingRequest) {
+    return pendingRequest
+  }
+  
+  // Make new reverse ENS resolution request
+  const requestPromise = (async (): Promise<string | null> => {
+    try {
+      // Use public ENS resolver endpoint for reverse lookup
+      const response = await fetch(`https://ensdata.net/${address}`)
+      if (!response.ok) return null
+      
+      const data = await response.json()
+      // Check for primary ENS first, then fallback to ens field
+      const ensName = data?.ens_primary || data?.ens
+      
+      if (typeof ensName === 'string' && isEnsName(ensName)) {
+        // Cache the result
+        ensCache.set(cacheKey, {
+          data: ensName,
+          timestamp: Date.now(),
+          ttl: ENS_CACHE_TTL
+        })
+        return ensName
+      }
+      
+      return null
+    } catch {
+      return null
+    } finally {
+      ensPending.delete(cacheKey)
+    }
+  })()
+  
+  ensPending.set(cacheKey, requestPromise)
+  return requestPromise
 }
 
 export function useArtistInfo(artistTerm: string) {
@@ -432,16 +547,13 @@ export function useCollectorInfo(ownerTerm: string) {
   return { loading, error, totalTokens }
 }
 
-function isHexAddress(maybe: string): boolean {
-  return /^0x[a-fA-F0-9]{40}$/.test(maybe)
-}
 
 export async function searchTokensByGraphQLAll(
   mode: "artist" | "project" | "collector",
   term: string,
   max = 100000
 ): Promise<Array<{ tokenId: string; contractAddress?: string }>> {
-  const isAddr = mode === 'collector' && isHexAddress(term)
+  const isAddr = mode === 'collector' && isEthAddress(term)
   const value = isAddr ? term.toLowerCase() : `%${term}%`
   const pageSize = 500
   let offset = 0
@@ -609,6 +721,10 @@ export type TokenEntry = {
   imageUrl?: string
   owner?: string
   invocation?: number
+  projectId?: string
+  projectWebsite?: string
+  artistAddress?: string
+  projectSlug?: string
 }
 
 export async function searchTokensWithLiveView(
@@ -638,7 +754,14 @@ export async function searchTokensWithLiveView(
             preview_asset_url
             owner_address
             invocation
-            project { name artist_name }
+            project { 
+              id
+              name 
+              artist_name
+              website
+              artist_address
+              slug
+            }
           }
         }
       `
@@ -657,7 +780,14 @@ export async function searchTokensWithLiveView(
             preview_asset_url
             owner_address
             invocation
-            project { name artist_name }
+            project { 
+              id
+              name 
+              artist_name
+              website
+              artist_address
+              slug
+            }
           }
         }
       `
@@ -676,7 +806,14 @@ export async function searchTokensWithLiveView(
             preview_asset_url
             owner_address
             invocation
-            project { name artist_name }
+            project { 
+              id
+              name 
+              artist_name
+              website
+              artist_address
+              slug
+            }
           }
         }
       `
@@ -716,6 +853,10 @@ export async function searchTokensWithLiveView(
           invocation: typeof invocation === 'number' ? invocation : undefined,
           projectName: proj && typeof proj.name === 'string' ? (proj.name as string) : undefined,
           artistName: proj && typeof proj.artist_name === 'string' ? (proj.artist_name as string) : undefined,
+          projectId: proj && typeof proj.id === 'string' ? (proj.id as string) : undefined,
+          projectWebsite: proj && typeof proj.website === 'string' ? (proj.website as string) : undefined,
+          artistAddress: proj && typeof proj.artist_address === 'string' ? (proj.artist_address as string) : undefined,
+          projectSlug: proj && typeof proj.slug === 'string' ? (proj.slug as string) : undefined,
         })
       }
     }
@@ -742,7 +883,15 @@ export async function tokensByIdWithLiveView(tokenIds: string[], max = 100000): 
           live_view_url
           preview_asset_url
           owner_address
-          project { name artist_name }
+          invocation
+          project { 
+            id
+            name 
+            artist_name
+            website
+            artist_address
+            slug
+          }
         }
       }
     `
@@ -776,6 +925,10 @@ export async function tokensByIdWithLiveView(tokenIds: string[], max = 100000): 
           invocation: typeof invocation === 'number' ? invocation : undefined,
           projectName: proj && typeof proj.name === 'string' ? (proj.name as string) : undefined,
           artistName: proj && typeof proj.artist_name === 'string' ? (proj.artist_name as string) : undefined,
+          projectId: proj && typeof proj.id === 'string' ? (proj.id as string) : undefined,
+          projectWebsite: proj && typeof proj.website === 'string' ? (proj.website as string) : undefined,
+          artistAddress: proj && typeof proj.artist_address === 'string' ? (proj.artist_address as string) : undefined,
+          projectSlug: proj && typeof proj.slug === 'string' ? (proj.slug as string) : undefined,
         })
       }
     }
@@ -911,8 +1064,31 @@ export async function resolveSelectionToTokenEntries(items: SelectionItem[], max
 
 // -------- users-aware collector helpers --------
 async function fetchUserAddressesByTerm(term: string): Promise<string[]> {
+  // If ENS name, resolve to address first
+  if (isEnsName(term)) {
+    const resolvedAddress = await resolveEnsToAddress(term)
+    if (resolvedAddress) {
+      // Search by the resolved address
+      const q = `
+        query UsersByAddr($addr: String!) {
+          users(where: { public_address: { _eq: $addr } }) { public_address }
+        }
+      `
+      const data = await graphqlRequest<{ users?: Array<Record<string, unknown>> }>(q, { addr: resolvedAddress })
+      const list = data?.users
+      if (!Array.isArray(list)) return [resolvedAddress] // Return resolved address even if not in users table
+      const addrs: string[] = []
+      for (const u of list) {
+        const a = (u as Record<string, unknown>)?.public_address
+        if (typeof a === 'string') addrs.push(a.toLowerCase())
+      }
+      return addrs.length > 0 ? addrs : [resolvedAddress]
+    }
+    return []
+  }
+  
   // If hex address, exact public_address match
-  if (isHexAddress(term)) {
+  if (isEthAddress(term)) {
     const q = `
       query UsersByAddr($addr: String!) {
         users(where: { public_address: { _eq: $addr } }) { public_address }
@@ -970,7 +1146,7 @@ export async function searchTokensByCollector(term: string, max = 100000): Promi
       : `
       query TokensByOwnerFallback($value: String!, $limit: Int!, $offset: Int!) {
         tokens_metadata(
-          where: { owner_address: { ${isHexAddress(term) ? '_eq' : '_ilike'}: $value } },
+          where: { owner_address: { ${isEthAddress(term) ? '_eq' : '_ilike'}: $value } },
           limit: $limit,
           offset: $offset,
           order_by: { token_id: asc }
@@ -982,7 +1158,7 @@ export async function searchTokensByCollector(term: string, max = 100000): Promi
     `
     const variables = useIn
       ? { owners: addresses, limit: pageSize, offset }
-      : { value: isHexAddress(term) ? term.toLowerCase() : wrapIlike(term), limit: pageSize, offset }
+      : { value: isEthAddress(term) ? term.toLowerCase() : wrapIlike(term), limit: pageSize, offset }
     const data = await graphqlRequest<{ tokens_metadata?: Array<Record<string, unknown>> }>(query, variables)
     const list = data?.tokens_metadata
     if (!Array.isArray(list) || list.length === 0) break

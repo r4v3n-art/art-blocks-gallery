@@ -6,7 +6,7 @@ import { useSearchParams, useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Slider } from "@/components/ui/slider"
 import { Play, Pause, SkipForward, SkipBack, X, Info, ChevronLeft, Shuffle, Maximize, Minimize } from 'lucide-react'
-import { truncateEthAddress } from "@/lib/utils"
+import { useEnsOrAddress } from "@/lib/utils"
 
 // Helper to detect if user is on Mac
 const isMac = typeof window !== 'undefined' && navigator.userAgent.toUpperCase().indexOf('MAC') >= 0
@@ -20,6 +20,10 @@ type NFTMeta = {
   imageUrl?: string
   owner?: string
   invocation?: number
+  projectId?: string
+  projectWebsite?: string
+  artistAddress?: string
+  projectSlug?: string
 }
 
 function SlideshowPlayer() {
@@ -284,6 +288,10 @@ function SlideshowPlayer() {
       imageUrl: currentEntry.imageUrl,
       owner: currentEntry.owner,
       invocation: currentEntry.invocation,
+      projectId: currentEntry.projectId,
+      projectWebsite: currentEntry.projectWebsite,
+      artistAddress: currentEntry.artistAddress,
+      projectSlug: currentEntry.projectSlug,
     }
   }, [currentEntry])
 
@@ -299,8 +307,27 @@ function SlideshowPlayer() {
       imageUrl: nextEntry.imageUrl,
       owner: nextEntry.owner,
       invocation: nextEntry.invocation,
+      projectId: nextEntry.projectId,
+      projectWebsite: nextEntry.projectWebsite,
+      artistAddress: nextEntry.artistAddress,
+      projectSlug: nextEntry.projectSlug,
     }
   }, [nextEntry])
+
+  // Resolve ENS name for current NFT owner
+  const ownerDisplayName = useEnsOrAddress(currentNFT?.owner)
+
+  // Generate Art Blocks URLs
+  const getArtistUrl = (artistAddress?: string) => {
+    return artistAddress ? `https://www.artblocks.io/artists/${artistAddress}` : null
+  }
+
+  const getProjectUrl = (projectSlug?: string) => {
+    if (projectSlug) {
+      return `https://www.artblocks.io/collection/${projectSlug}`
+    }
+    return null
+  }
 
   // Auto-start playing once loaded
   useEffect(() => {
@@ -399,7 +426,44 @@ function SlideshowPlayer() {
                       {currentNFT.owner && (
                         <div className="text-sm text-gray-500">
                           <span className="font-light">Collected by </span>
-                          <span className="font-mono">{truncateEthAddress(currentNFT.owner)}</span>
+                          <a 
+                            href={`https://www.artblocks.io/profile/${currentNFT.owner}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="font-mono text-gray-700 hover:text-gray-900 underline transition-colors"
+                          >
+                            {ownerDisplayName}
+                          </a>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Collection and Artist Links */}
+                  <div className="pt-4 border-t border-gray-200">
+                    <div className="space-y-2 text-xs">
+                      {getProjectUrl(currentNFT.projectSlug) && (
+                        <div>
+                          <a 
+                            href={getProjectUrl(currentNFT.projectSlug)!}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-gray-600 hover:text-gray-900 underline transition-colors"
+                          >
+                            View Collection
+                          </a>
+                        </div>
+                      )}
+                      {getArtistUrl(currentNFT.artistAddress) && (
+                        <div>
+                          <a 
+                            href={getArtistUrl(currentNFT.artistAddress)!}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-gray-600 hover:text-gray-900 underline transition-colors"
+                          >
+                            View Artist
+                          </a>
                         </div>
                       )}
                     </div>
@@ -494,6 +558,7 @@ function SlideshowPlayer() {
                       </div>
                     </div>
                   </div>
+
                 </div>
               </div>
 
@@ -540,6 +605,7 @@ function SlideshowPlayer() {
                   </div>
                 </div>
               )}
+
         </div>
       )}
 
@@ -630,7 +696,14 @@ function SlideshowPlayer() {
                     {currentNFT.owner && (
                       <div className="text-gray-500 text-xs">
                         <span className="font-light">Collected by </span>
-                        <span className="font-mono">{truncateEthAddress(currentNFT.owner)}</span>
+                        <a 
+                          href={`https://www.artblocks.io/profile/${currentNFT.owner}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="font-mono text-gray-600 hover:text-gray-800 underline transition-colors"
+                        >
+                          {ownerDisplayName}
+                        </a>
                       </div>
                     )}
                   </div>

@@ -54,7 +54,7 @@ export default function HomePage() {
                     <SelectContent>
                       <SelectItem value="token">Token ID</SelectItem>
                       <SelectItem value="artist">Artist</SelectItem>
-                      <SelectItem value="project">Project</SelectItem>
+                      <SelectItem value="project">Collection</SelectItem>
                       <SelectItem value="collector">Collector</SelectItem>
                     </SelectContent>
                   </Select>
@@ -68,7 +68,7 @@ export default function HomePage() {
                     placeholder={
                       searchType === 'token' ? 'Enter token ID' :
                       searchType === 'artist' ? 'Enter artist name' :
-                      searchType === 'project' ? 'Enter project name' :
+                      searchType === 'project' ? 'Enter collection name' :
                       'Enter collector name or address'
                     }
                     className="w-full border-gray-300 rounded-none text-gray-900 font-light text-lg py-3"

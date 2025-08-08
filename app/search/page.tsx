@@ -522,7 +522,7 @@ function SearchResults() {
               <SelectContent>
                 <SelectItem value="token">Token ID</SelectItem>
                 <SelectItem value="artist">Artist</SelectItem>
-                <SelectItem value="project">Project</SelectItem>
+                <SelectItem value="project">Collection</SelectItem>
                 <SelectItem value="collector">Collector</SelectItem>
               </SelectContent>
             </Select>
@@ -574,7 +574,7 @@ function SearchResults() {
               <h1 className="text-3xl font-light text-gray-900">Search Results</h1>
               <p className="text-gray-600 font-light mt-1">
                 {searchType === 'artist' && `${artistList.length} ${artistList.length === 1 ? 'artist' : 'artists'} found`}
-                {searchType === 'project' && `${projectList.length} ${projectList.length === 1 ? 'project' : 'projects'} found`}
+                {searchType === 'project' && `${projectList.length} ${projectList.length === 1 ? 'collection' : 'collections'} found`}
                 {searchType === 'collector' && `${collectorList.length} ${collectorList.length === 1 ? 'collector' : 'collectors'} found`}
                 {searchType === 'token' && `${tokenRefs.length} ${tokenRefs.length === 1 ? 'token' : 'tokens'} found`}
               </p>
