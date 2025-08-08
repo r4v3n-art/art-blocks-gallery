@@ -559,6 +559,7 @@ export type TokenEntry = {
   artistName?: string
   imageUrl?: string
   owner?: string
+  invocation?: number
 }
 
 export async function searchTokensWithLiveView(
@@ -587,6 +588,7 @@ export async function searchTokensWithLiveView(
             live_view_url
             preview_asset_url
             owner_address
+            invocation
             project { name artist_name }
           }
         }
@@ -605,6 +607,7 @@ export async function searchTokensWithLiveView(
             live_view_url
             preview_asset_url
             owner_address
+            invocation
             project { name artist_name }
           }
         }
@@ -623,6 +626,7 @@ export async function searchTokensWithLiveView(
             live_view_url
             preview_asset_url
             owner_address
+            invocation
             project { name artist_name }
           }
         }
@@ -644,6 +648,7 @@ export async function searchTokensWithLiveView(
       const liveUrl = item?.live_view_url
       const previewUrl = item?.preview_asset_url
       const owner = item?.owner_address
+      const invocation = item?.invocation
       const proj = item?.project as Record<string, unknown> | undefined
       
       if (typeof tid === 'string') {
@@ -659,6 +664,7 @@ export async function searchTokensWithLiveView(
           liveViewUrl: typeof liveUrl === 'string' ? liveUrl : undefined,
           imageUrl: typeof previewUrl === 'string' ? previewUrl : composeMediaUrl(tid, typeof ca === 'string' ? ca : undefined),
           owner: typeof owner === 'string' ? owner : undefined,
+          invocation: typeof invocation === 'number' ? invocation : undefined,
           projectName: proj && typeof proj.name === 'string' ? (proj.name as string) : undefined,
           artistName: proj && typeof proj.artist_name === 'string' ? (proj.artist_name as string) : undefined,
         })
@@ -701,6 +707,7 @@ export async function tokensByIdWithLiveView(tokenIds: string[], max = 100000): 
       const liveUrl = item?.live_view_url
       const previewUrl = item?.preview_asset_url
       const owner = item?.owner_address
+      const invocation = item?.invocation
       const proj = item?.project as Record<string, unknown> | undefined
       
       if (typeof tid === 'string') {
@@ -717,6 +724,7 @@ export async function tokensByIdWithLiveView(tokenIds: string[], max = 100000): 
           liveViewUrl: typeof liveUrl === 'string' ? liveUrl : undefined,
           imageUrl: typeof previewUrl === 'string' ? previewUrl : composeMediaUrl(tid, typeof ca === 'string' ? ca : undefined),
           owner: typeof owner === 'string' ? owner : undefined,
+          invocation: typeof invocation === 'number' ? invocation : undefined,
           projectName: proj && typeof proj.name === 'string' ? (proj.name as string) : undefined,
           artistName: proj && typeof proj.artist_name === 'string' ? (proj.artist_name as string) : undefined,
         })

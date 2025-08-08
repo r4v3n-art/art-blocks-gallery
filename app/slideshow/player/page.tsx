@@ -7,6 +7,9 @@ import { Button } from "@/components/ui/button"
 import { Play, Pause, SkipForward, SkipBack, X, Info, ChevronLeft, Shuffle } from 'lucide-react'
 import { truncateEthAddress } from "@/lib/utils"
 
+// Helper to detect if user is on Mac
+const isMac = typeof window !== 'undefined' && navigator.platform.toUpperCase().indexOf('MAC') >= 0
+
 type NFTMeta = {
   tokenId: string
   projectName?: string
@@ -15,6 +18,7 @@ type NFTMeta = {
   generatorUrl: string
   imageUrl?: string
   owner?: string
+  invocation?: number
 }
 
 function SlideshowPlayer() {
@@ -27,13 +31,17 @@ function SlideshowPlayer() {
   const [timeRemaining, setTimeRemaining] = useState(0)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [initializing, setInitializing] = useState(true)
+  const [showBorderOverride, setShowBorderOverride] = useState<boolean | null>(null)
   
   // Settings from URL params
   const duration = parseInt(searchParams.get('duration') || '5')
   const autoPlay = searchParams.get('autoPlay') === 'true'
   const showInfo = searchParams.get('showInfo') === 'true'
   const initialRandomOrder = searchParams.get('randomOrder') === 'true'
-  const showBorder = searchParams.get('showBorder') === 'true'
+  const showBorderFromUrl = searchParams.get('showBorder') === 'true'
+  
+  // Use override if set, otherwise use URL param
+  const showBorder = showBorderOverride !== null ? showBorderOverride : showBorderFromUrl
   
   // Shuffle state (can be toggled during playback)
   const [isShuffled, setIsShuffled] = useState(initialRandomOrder)
@@ -154,6 +162,10 @@ function SlideshowPlayer() {
     setCurrentIndex(0)
   }, [isShuffled])
 
+  const toggleBorder = useCallback(() => {
+    setShowBorderOverride(prev => prev === null ? !showBorderFromUrl : !prev)
+  }, [showBorderFromUrl])
+
   // Keyboard controls
   useEffect(() => {
     const handleKeyPress = (e: KeyboardEvent) => {
@@ -184,12 +196,19 @@ function SlideshowPlayer() {
             toggleShuffle()
           }
           break
+        case 'b':
+        case 'B':
+          if (e.metaKey || e.ctrlKey) {
+            e.preventDefault()
+            toggleBorder()
+          }
+          break
       }
     }
 
     window.addEventListener('keydown', handleKeyPress)
     return () => window.removeEventListener('keydown', handleKeyPress)
-  }, [nextSlide, prevSlide, togglePlayPause, exitSlideshow, toggleSidebar, toggleShuffle, isSingleItem])
+  }, [nextSlide, prevSlide, togglePlayPause, exitSlideshow, toggleSidebar, toggleShuffle, toggleBorder, isSingleItem])
 
   // Convert current entry to NFTMeta format
   const currentNFT = useMemo<NFTMeta | null>(() => {
@@ -202,6 +221,7 @@ function SlideshowPlayer() {
       generatorUrl: currentEntry.generatorUrl,
       imageUrl: currentEntry.imageUrl,
       owner: currentEntry.owner,
+      invocation: currentEntry.invocation,
     }
   }, [currentEntry])
 
@@ -285,7 +305,7 @@ function SlideshowPlayer() {
                     </p>
                     <div className="space-y-2">
                       <div className="text-sm text-gray-500 font-mono">
-                        #{currentNFT.tokenId}
+                        #{currentNFT.invocation ?? currentNFT.tokenId}
                       </div>
                       {currentNFT.owner && (
                         <div className="text-sm text-gray-500">
@@ -342,13 +362,17 @@ function SlideshowPlayer() {
                           </div>
                           <div className="flex justify-between">
                             <span className="text-gray-600 font-light">Toggle Shuffle</span>
-                            <kbd className="px-2 py-1 bg-gray-200 text-gray-700 font-mono">⌘⇧S</kbd>
+                            <kbd className="px-2 py-1 bg-gray-200 text-gray-700 font-mono">{isMac ? '⌘⇧S' : 'Ctrl+Shift+S'}</kbd>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-600 font-light">Toggle Border</span>
+                            <kbd className="px-2 py-1 bg-gray-200 text-gray-700 font-mono">{isMac ? '⌘B' : 'Ctrl+B'}</kbd>
                           </div>
                         </>
                       )}
                       <div className="flex justify-between">
                         <span className="text-gray-600 font-light">Toggle Info</span>
-                        <kbd className="px-2 py-1 bg-gray-200 text-gray-700 font-mono">⌘I</kbd>
+                        <kbd className="px-2 py-1 bg-gray-200 text-gray-700 font-mono">{isMac ? '⌘I' : 'Ctrl+I'}</kbd>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-gray-600 font-light">Exit</span>
@@ -457,7 +481,7 @@ function SlideshowPlayer() {
                       {currentNFT.artist}
                     </div>
                     <div className="text-gray-500 font-mono text-xs">
-                      #{currentNFT.tokenId} • {currentIndex + 1}/{shuffledEntries.length}
+                      #{currentNFT.invocation ?? currentNFT.tokenId}
                     </div>
                     {currentNFT.owner && (
                       <div className="text-gray-500 text-xs">
@@ -545,9 +569,16 @@ function SlideshowPlayer() {
                   )}
                 </div>
                 
-                {autoPlay && !isSingleItem && (
-                  <div className="text-center mt-3 text-gray-600 text-sm font-light">
-                    {isPlaying ? `Next in ${timeRemaining}s` : 'Paused'}
+                {!isSingleItem && (
+                  <div className="text-center mt-3 space-y-1">
+                    <div className="text-gray-600 text-sm font-light">
+                      Slide {currentIndex + 1} of {shuffledEntries.length}
+                    </div>
+                    {autoPlay && (
+                      <div className="text-gray-600 text-sm font-light">
+                        {isPlaying ? `Next in ${timeRemaining}s` : 'Paused'}
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
