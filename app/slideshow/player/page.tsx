@@ -430,14 +430,20 @@ function SlideshowPlayer() {
       )}
 
       {/* Main Art Display Area */}
-      <div className={`flex-1 relative ${showBorder ? 'bg-white' : 'bg-gray-100'}`}>
+      <div 
+        className={`flex-1 relative ${showBorder ? 'bg-gradient-to-br from-stone-50 to-stone-100' : 'bg-gray-100'}`}
+        style={showBorder ? {
+          backgroundImage: `radial-gradient(circle at 1px 1px, rgba(0,0,0,0.02) 1px, transparent 0)`,
+          backgroundSize: '20px 20px'
+        } : undefined}
+      >
         {/* Art Blocks Render Area with Optional Border */}
         <div className={`absolute inset-0 flex items-center justify-center ${showBorder ? 'p-8' : ''}`}>
-          <div className="w-full h-full max-w-none max-h-none">
+          <div className={`w-full h-full max-w-none max-h-none ${showBorder ? 'shadow-inner shadow-stone-200/80' : ''}`}>
             <iframe
-              key={currentNFT.tokenId} // Force re-render when token changes
+              key={`${currentNFT.tokenId}-${showBorder}`} // Force re-render when token OR border changes
               src={currentNFT.generatorUrl}
-              className="w-full h-full border-0"
+              className={`w-full h-full border-0 ${showBorder ? 'shadow-lg shadow-stone-400/20' : ''}`}
               title={`${currentNFT.projectName} #${currentNFT.tokenId}`}
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
               sandbox="allow-scripts allow-same-origin allow-forms"
