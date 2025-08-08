@@ -16,12 +16,13 @@ This is a Next.js 15 application that creates an immersive Art Blocks NFT galler
 ### Core Data Layer (`lib/ab.ts`)
 - **GraphQL Integration**: All data fetching uses Art Blocks' GraphQL endpoint at `https://data.artblocks.io/v1/graphql`
 - **Search Functions**: Provides comprehensive search capabilities for artists, collections, collectors, and tokens
+- **URL Parsing**: Extracts token information from Art Blocks URLs
 - **ENS Integration**: ENS name resolution with caching for Ethereum addresses
 - **URL Composition**: Helper functions for Art Blocks API endpoints (token, generator, media URLs)
 - **Selection System**: Handles complex multi-type selections (artist:name, project:name, collector:address, token:id) for slideshow queuing
 
 ### Application Routes
-1. **Home (`app/page.tsx`)**: Clean search interface with type selection (Token ID, Artist, Collection, Collector)
+1. **Home (`app/page.tsx`)**: Clean search interface with type selection (Token URL, Artist, Collection, Collector)
 2. **Search Results (`app/search/page.tsx`)**: 
    - Displays search results based on type
    - Implements infinite scrolling for large result sets

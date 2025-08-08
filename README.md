@@ -1,10 +1,10 @@
 # Art Blocks Gallery
 
-A modern, immersive gallery and slideshow application for displaying Art Blocks generative art collections. Built with Next.js 15 and designed for collectors, artists, and enthusiasts who want to showcase generative art in a beautiful, full-screen experience.
+A modern, immersive gallery application for displaying Art Blocks generative art collections. Built with Next.js 15 and designed for collectors, artists, and enthusiasts who want to showcase generative art in a beautiful, full-screen experience.
 
 ## Features
 
-### 🎨 **Immersive Slideshow Experience**
+### 🎨 **Immersive Gallery Experience**
 - Full-screen display of live Art Blocks generators
 - Auto-advance with configurable timing (5 seconds to 7 days)
 - Keyboard navigation and controls
@@ -12,9 +12,10 @@ A modern, immersive gallery and slideshow application for displaying Art Blocks 
 - Preloading for smooth transitions
 
 ### 🔍 **Comprehensive Search**
-- Search by **Token ID**, **Artist**, **Collection**, or **Collector**
+- Search by **Token URL**, **Artist**, **Collection**, or **Collector**
+- **Art Blocks URL Support**: Paste Art Blocks token URLs directly (e.g., `https://www.artblocks.io/token/0xa319.../15000072`)
 - Real-time results with infinite scrolling
-- Shopping cart-style selection system for building custom slideshows
+- Shopping cart-style selection system for building custom galleries
 - ENS name support for collectors (e.g., search for "r4v3n.eth")
 
 ### 🏷️ **ENS Integration**
@@ -31,9 +32,9 @@ A modern, immersive gallery and slideshow application for displaying Art Blocks 
 
 ### ⌨️ **Keyboard Controls**
 - `←/→` - Navigate slides
-- `Space` - Play/pause slideshow
+- `Space` - Play/pause gallery
 - `F` - Toggle fullscreen
-- `Esc` - Exit slideshow
+- `Esc` - Exit gallery
 - `Cmd/Ctrl+I` - Toggle info sidebar
 - `Cmd/Ctrl+Shift+S` - Toggle shuffle mode
 - `Cmd/Ctrl+B` - Toggle decorative border
@@ -72,18 +73,18 @@ npm start
 
 ## Usage
 
-### Creating a Slideshow
+### Creating a Gallery
 
 1. **Search** for content using the homepage search interface
 2. **Select** individual tokens, entire collections, artists, or collectors
 3. **Build** your selection using the shopping cart system
-4. **Launch** the slideshow with your custom settings
+4. **Launch** the gallery with your custom settings
 
-### Slideshow Options
+### Gallery Options
 
 - **Duration**: Set how long each slide displays
 - **Auto-play**: Enable automatic advancement
-- **Random Order**: Shuffle the slideshow sequence
+- **Random Order**: Shuffle the gallery sequence
 - **Show Info**: Display token metadata in sidebar
 - **Show Border**: Add decorative gallery-style borders
 
@@ -118,7 +119,7 @@ This project welcomes contributions! Areas for enhancement:
 - Additional Art Blocks ecosystem integrations
 - Performance optimizations
 - Mobile experience improvements
-- New slideshow features
+- New gallery features
 
 ## License
 

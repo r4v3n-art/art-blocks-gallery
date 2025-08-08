@@ -1,7 +1,8 @@
 "use client"
 
 import { useState, useEffect, useRef, Suspense } from "react"
-import { searchTokensByGraphQLAll, composeMediaUrl, composeGeneratorUrl, searchArtistsDistinct, serializeSelection } from "@/lib/ab"
+import { searchTokensByGraphQLAll, composeMediaUrl, composeGeneratorUrl, searchArtistsDistinct, serializeSelection, parseArtBlocksUrl, isEnsName, resolveEnsToAddress, isEthAddress } from "@/lib/ab"
+import { truncateEthAddress } from "@/lib/utils"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useSearchParams, useRouter } from "next/navigation"
@@ -17,6 +18,7 @@ type SearchResult = {
   generatorUrl: string
   collectorAddress?: string
   contractAddress?: string
+  invocation?: number
 }
 
 const AB_GQL_ENDPOINT = 'https://artblocks-mainnet.hasura.app/v1/graphql'
@@ -61,19 +63,47 @@ async function fetchContractForToken(tokenId: string): Promise<string | undefine
 async function fetchTokenMetadata(tokenId: string, signal?: AbortSignal, contractHint?: string): Promise<SearchResult | null> {
   try {
     // First try to get metadata from GraphQL
-    const query = `
-      query TokenMetadata($tokenId: String!) {
-        tokens_metadata(where: { token_id: { _eq: $tokenId } }, limit: 1) {
-          token_id
-          contract_address
-          live_view_url
-          preview_asset_url
-          owner_address
-          project { name artist_name }
+    let query: string
+    let variables: Record<string, unknown>
+    
+    if (contractHint) {
+      // Query by both contract address and token ID for precise matching
+      query = `
+        query TokenMetadata($tokenId: String!, $contractAddress: String!) {
+          tokens_metadata(where: { 
+            token_id: { _eq: $tokenId }, 
+            contract_address: { _eq: $contractAddress } 
+          }, limit: 1) {
+            token_id
+            contract_address
+            live_view_url
+            preview_asset_url
+            owner_address
+            invocation
+            project { name artist_name }
+          }
         }
-      }
-    `
-    const gqlData = await graphqlRequest<{ tokens_metadata?: Array<Record<string, unknown>> }>(query, { tokenId })
+      `
+      variables = { tokenId, contractAddress: contractHint }
+    } else {
+      // Fallback to token ID only (less reliable)
+      query = `
+        query TokenMetadata($tokenId: String!) {
+          tokens_metadata(where: { token_id: { _eq: $tokenId } }, limit: 1) {
+            token_id
+            contract_address
+            live_view_url
+            preview_asset_url
+            owner_address
+            invocation
+            project { name artist_name }
+          }
+        }
+      `
+      variables = { tokenId }
+    }
+    
+    const gqlData = await graphqlRequest<{ tokens_metadata?: Array<Record<string, unknown>> }>(query, variables)
     const gqlToken = gqlData?.tokens_metadata?.[0]
     
     if (gqlToken) {
@@ -86,6 +116,7 @@ async function fetchTokenMetadata(tokenId: string, signal?: AbortSignal, contrac
         generatorUrl: typeof gqlToken.live_view_url === 'string' ? gqlToken.live_view_url : `https://generator.artblocks.io/${encodeURIComponent(tokenId)}`,
         collectorAddress: typeof gqlToken.owner_address === 'string' ? gqlToken.owner_address : undefined,
         contractAddress: typeof gqlToken.contract_address === 'string' ? gqlToken.contract_address : contractHint,
+        invocation: typeof gqlToken.invocation === 'number' ? gqlToken.invocation : undefined,
       }
     }
     
@@ -187,7 +218,7 @@ function SearchResults() {
   const [metadataMap, setMetadataMap] = useState<Record<string, SearchResult>>({})
   const [visibleCount, setVisibleCount] = useState(24)
   const [artistList, setArtistList] = useState<Array<{ name: string; total: number }>>([])
-  const [projectList, setProjectList] = useState<Array<{ name: string; artist?: string | null; total: number }>>([])
+  const [projectList, setProjectList] = useState<Array<{ name: string; artist?: string | null; total: number; imageUrl?: string }>>([])
   const [collectorList, setCollectorList] = useState<Array<{ address: string; displayName?: string | null; total: number }>>([])
   const [loading, setLoading] = useState(true)
   const sentinelRef = useRef<HTMLDivElement | null>(null)
@@ -269,8 +300,9 @@ function SearchResults() {
       showInfo: 'true',
       randomOrder: 'false',
       showBorder: 'false',
+      fullscreen: 'true', // Start in fullscreen by default
     })
-    router.push(`/slideshow/player?${qs.toString()}`)
+    router.push(`/gallery/player?${qs.toString()}`)
   }
   // Selection totals
   const [selectionTotal, setSelectionTotal] = useState<number>(0)
@@ -328,9 +360,22 @@ function SearchResults() {
           setCollectorList([])
           
           if (searchType === 'token') {
-            const rawIds = searchQuery.split(/[\s,]+/).map((s) => s.trim()).filter(Boolean)
-            const tokenIds = Array.from(new Set(rawIds))
-            setTokenRefs(tokenIds.map((id) => ({ tokenId: id })))
+            const rawInputs = searchQuery.split(/[\s,]+/).map((s) => s.trim()).filter(Boolean)
+            const tokenRefs: Array<{ tokenId: string; contractAddress?: string }> = []
+            
+            for (const input of rawInputs) {
+              // Parse Art Blocks URL to extract token information
+              const urlParsed = parseArtBlocksUrl(input)
+              if (urlParsed) {
+                tokenRefs.push({
+                  tokenId: urlParsed.tokenId,
+                  contractAddress: urlParsed.contractAddress
+                })
+              }
+              // Only add tokens that were successfully parsed from URLs
+            }
+            
+            setTokenRefs(tokenRefs)
           } else if (searchType === 'artist') {
             // Show artist search results, not tokens
             setTokenRefs([])
@@ -383,7 +428,49 @@ function SearchResults() {
                 artist: typeof p?.artist_name === 'string' ? (p.artist_name as string) : null,
                 total: typeof p?.invocations === 'number' ? (p.invocations as number) : 0,
               })).filter(p => p.name)
-              setProjectList(mapped)
+              
+              // Fetch preview images for each project
+              const projectsWithImages = await Promise.all(
+                mapped.map(async (project) => {
+                  if (controller.signal.aborted) return project
+                  
+                  const imageQuery = `
+                    query FirstTokenInProject($projectName: String!) {
+                      tokens_metadata(
+                        where: { project_name: { _eq: $projectName } },
+                        order_by: { invocation: asc },
+                        limit: 1
+                      ) {
+                        preview_asset_url
+                        token_id
+                        contract_address
+                      }
+                    }
+                  `
+                  const imageData = await graphqlRequest<{ tokens_metadata?: Array<Record<string, unknown>> }>(imageQuery, { projectName: project.name })
+                  const firstToken = imageData?.tokens_metadata?.[0]
+                  
+                  let imageUrl: string | undefined = undefined
+                  if (firstToken) {
+                    const previewUrl = firstToken.preview_asset_url
+                    const tokenId = firstToken.token_id
+                    const contractAddress = firstToken.contract_address
+                    
+                    if (typeof previewUrl === 'string' && previewUrl) {
+                      imageUrl = previewUrl
+                    } else if (typeof tokenId === 'string') {
+                      // Fallback to composed media URL
+                      imageUrl = composeMediaUrl(tokenId, typeof contractAddress === 'string' ? contractAddress : undefined)
+                    }
+                  }
+                  
+                  return { ...project, imageUrl }
+                })
+              )
+              
+              if (!controller.signal.aborted) {
+                setProjectList(projectsWithImages)
+              }
             } else {
               setProjectList([])
             }
@@ -393,37 +480,107 @@ function SearchResults() {
             if (!term) {
               setCollectorList([])
             } else {
-              const uq = `
-                query U($value: String!) {
-                  users(where: { _or: [
-                    { display_name: { _ilike: $value } },
-                    { public_address: { _ilike: $value } }
-                  ] }, order_by: { display_name: asc }) {
-                    display_name
-                    public_address
-                  }
+              // Check if term is an ENS name and resolve it
+              let searchValue = term
+              let resolvedAddress: string | null = null
+              
+              if (isEnsName(term)) {
+                resolvedAddress = await resolveEnsToAddress(term)
+                if (resolvedAddress) {
+                  searchValue = resolvedAddress
                 }
-              `
-              const ures = await graphqlRequest<{ users?: Array<Record<string, unknown>> }>(uq, { value: `%${term}%` })
+              }
+              
+              // Build query based on whether we have an address or search term
+              const isAddress = isEthAddress(searchValue)
+              const uq = isAddress 
+                ? `
+                  query U($value: String!) {
+                    users(where: { public_address: { _eq: $value } }, order_by: { display_name: asc }, limit: 50) {
+                      display_name
+                      public_address
+                    }
+                  }
+                `
+                : `
+                  query U($value: String!) {
+                    users(where: { _or: [
+                      { display_name: { _ilike: $value } },
+                      { public_address: { _ilike: $value } }
+                    ] }, order_by: { display_name: asc }, limit: 50) {
+                      display_name
+                      public_address
+                    }
+                  }
+                `
+              
+              const queryValue = isAddress ? searchValue.toLowerCase() : `%${searchValue}%`
+              const ures = await graphqlRequest<{ users?: Array<Record<string, unknown>> }>(uq, { value: queryValue })
               if (controller.signal.aborted) return
               
               const users = ures?.users
               if (Array.isArray(users) && users.length > 0) {
-                const result: Array<{ address: string; displayName?: string | null; total: number }> = []
+                // Extract all addresses for batch query
+                const addresses: string[] = []
+                const userMap = new Map<string, { displayName?: string | null }>()
+                
                 for (const u of users) {
-                  if (controller.signal.aborted) return
                   const address = typeof u?.public_address === 'string' ? (u.public_address as string).toLowerCase() : ''
                   if (!address) continue
+                  addresses.push(address)
                   const displayName = typeof u?.display_name === 'string' ? (u.display_name as string) : null
-                  const cq = `
-                    query C($owner: String!) { tokens_metadata_aggregate(where: { owner_address: { _eq: $owner } }) { aggregate { count } } }
-                  `
-                  const cres = await graphqlRequest<{ tokens_metadata_aggregate?: { aggregate?: { count?: number } } }>(cq, { owner: address })
-                  if (controller.signal.aborted) return
-                  const cnt = cres?.tokens_metadata_aggregate?.aggregate?.count
-                  result.push({ address, displayName, total: typeof cnt === 'number' ? cnt : 0 })
+                  userMap.set(address, { displayName })
                 }
-                setCollectorList(result)
+                
+                if (addresses.length > 0) {
+                  // Use parallel queries for better performance
+                  const countPromises = addresses.map(async (address) => {
+                    const cq = `
+                      query C($owner: String!) { 
+                        tokens_metadata_aggregate(where: { owner_address: { _eq: $owner } }) { 
+                          aggregate { count } 
+                        } 
+                      }
+                    `
+                    const cres = await graphqlRequest<{ tokens_metadata_aggregate?: { aggregate?: { count?: number } } }>(cq, { owner: address })
+                    const cnt = cres?.tokens_metadata_aggregate?.aggregate?.count
+                    return { address, count: typeof cnt === 'number' ? cnt : 0 }
+                  })
+                  
+                  const counts = await Promise.all(countPromises)
+                  if (controller.signal.aborted) return
+                  
+                  // Build result with counts
+                  const result: Array<{ address: string; displayName?: string | null; total: number }> = []
+                  for (const { address, count } of counts) {
+                    if (count > 0) {
+                      const user = userMap.get(address)
+                      result.push({ address, displayName: user?.displayName, total: count })
+                    }
+                  }
+                  
+                  // Sort by total descending
+                  result.sort((a, b) => b.total - a.total)
+                  setCollectorList(result)
+                } else {
+                  setCollectorList([])
+                }
+              } else if (resolvedAddress) {
+                // If ENS resolved but user not in database, still check if they own tokens
+                const cq = `
+                  query C($owner: String!) { tokens_metadata_aggregate(where: { owner_address: { _eq: $owner } }) { aggregate { count } } }
+                `
+                const cres = await graphqlRequest<{ tokens_metadata_aggregate?: { aggregate?: { count?: number } } }>(cq, { owner: resolvedAddress.toLowerCase() })
+                if (!controller.signal.aborted) {
+                  const cnt = cres?.tokens_metadata_aggregate?.aggregate?.count
+                  const total = typeof cnt === 'number' ? cnt : 0
+                  if (total > 0) {
+                    // Show the ENS name as display name since it resolved
+                    setCollectorList([{ address: resolvedAddress.toLowerCase(), displayName: term, total }])
+                  } else {
+                    setCollectorList([])
+                  }
+                }
               } else {
                 setCollectorList([])
               }
@@ -520,7 +677,7 @@ function SearchResults() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="token">Token ID</SelectItem>
+                <SelectItem value="token">Token URL</SelectItem>
                 <SelectItem value="artist">Artist</SelectItem>
                 <SelectItem value="project">Collection</SelectItem>
                 <SelectItem value="collector">Collector</SelectItem>
@@ -530,7 +687,12 @@ function SearchResults() {
               value={queryInput}
               onChange={(e) => setQueryInput(e.target.value)}
               onKeyDown={(e) => { if (e.key === 'Enter') handleSearch() }}
-              placeholder="Search…"
+              placeholder={
+                typeInput === 'token' ? 'Paste Art Blocks token URL...' :
+                typeInput === 'artist' ? 'Search artists...' :
+                typeInput === 'project' ? 'Search collections...' :
+                'Search collectors...'
+              }
               className="flex-1 border-gray-300 rounded-none text-gray-900 font-light"
             />
             <Button onClick={handleSearch} className="bg-gray-900 hover:bg-gray-800 rounded-none">Search</Button>
@@ -540,7 +702,7 @@ function SearchResults() {
             <div className="text-sm text-gray-600">Selection: {cart.length} item{cart.length === 1 ? '' : 's'}{selectionLoading ? ' · computing…' : selectionTotal > 0 ? ` · ${selectionTotal} tokens` : ''}</div>
               <div className="flex gap-2">
                 <Button onClick={startFromCart} className="bg-gray-900 hover:bg-gray-800 rounded-none" disabled={cart.length === 0}>
-                  Start Slideshow (Selection{selectionLoading ? '' : selectionTotal > 0 ? ` · ${selectionTotal}` : ''})
+                  Start Gallery {selectionLoading ? '' : selectionTotal > 0 ? `(${selectionTotal})` : ''}
                 </Button>
               </div>
             </div>
@@ -600,7 +762,7 @@ function SearchResults() {
           <div className="text-center py-24">
             <p className="text-gray-600 font-light text-lg">No results found</p>
               <p className="text-gray-500 font-light text-sm mt-2">
-                {searchType === 'token' ? 'Try another token ID (you can input comma-separated IDs).' : 'Try refining your search.'}
+                {searchType === 'token' ? 'Try pasting a valid Art Blocks token URL (you can input comma-separated URLs).' : 'Try refining your search.'}
               </p>
           </div>
           ) : (
@@ -624,12 +786,31 @@ function SearchResults() {
             ) : searchType === 'project' && projectList.length > 0 ? (
               projectList.map((p) => (
                 <div key={`${p.name}-${p.artist ?? ''}`} className="bg-white border border-gray-200 hover:shadow-md transition-shadow">
-                  <div className="aspect-square bg-gray-100 flex items-center justify-center">
-                    <div className="text-center p-8">
-                      <h3 className="font-light text-gray-900 text-xl mb-2">{p.name}</h3>
-                      {p.artist && (<p className="text-gray-600 font-light">{p.artist}</p>)}
-                      <p className="text-gray-600 font-light">{p.total} tokens</p>
-                      <div className="mt-4">
+                  <div className="aspect-square bg-gray-100 overflow-hidden">
+                    {p.imageUrl ? (
+                      /* eslint-disable-next-line @next/next/no-img-element */
+                      <img 
+                        src={p.imageUrl}
+                        alt={`${p.name} collection preview`}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <div className="text-center p-8">
+                          <h3 className="font-light text-gray-600 text-lg">{p.name}</h3>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  <div className="p-6">
+                    <h3 className="font-light text-gray-900 text-lg mb-1">{p.name}</h3>
+                    {p.artist && (<p className="text-gray-600 font-light text-sm mb-3">{p.artist}</p>)}
+                    <div className="space-y-2 text-xs">
+                      <div className="flex justify-between">
+                        <span className="text-gray-500 font-light">Tokens</span>
+                        <span className="text-gray-700">{p.total}</span>
+                      </div>
+                      <div className="pt-2">
                         <Button variant="outline" className="rounded-none" onClick={() => addToSelection({ type: 'project', value: p.name })} disabled={isInCart({ type: 'project', value: p.name })}>
                           {isInCart({ type: 'project', value: p.name }) ? 'Added' : 'Add to Selection'}
                         </Button>
@@ -673,7 +854,9 @@ function SearchResults() {
                 </div>
                 <div className="p-6">
                   {nft.projectName && (
-                  <h3 className="font-light text-gray-900 text-lg mb-1">{nft.projectName}</h3>
+                  <h3 className="font-light text-gray-900 text-lg mb-1">
+                    {nft.projectName}{nft.invocation ? ` #${nft.invocation}` : ''}
+                  </h3>
                   )}
                   {nft.artist && (
                   <p className="text-gray-600 font-light text-sm mb-3">{nft.artist}</p>
@@ -683,17 +866,17 @@ function SearchResults() {
                       <span className="text-gray-500 font-light">Token</span>
                       <span className="text-gray-700 font-mono">#{ref.tokenId}</span>
                     </div>
+                    {nft.collectorAddress && (
+                      <div className="flex justify-between">
+                        <span className="text-gray-500 font-light">Owner</span>
+                        <span className="text-gray-700 font-mono text-xs">{truncateEthAddress(nft.collectorAddress)}</span>
+                      </div>
+                    )}
                     <div className="pt-2">
                       <Button variant="outline" className="rounded-none" onClick={() => addToSelection({ type: 'token', value: ref.tokenId })} disabled={isInCart({ type: 'token', value: ref.tokenId })}>
                         {isInCart({ type: 'token', value: ref.tokenId }) ? 'Added' : 'Add to Selection'}
                       </Button>
                     </div>
-                      {nft.collectorAddress && (
-                    <div className="flex justify-between">
-                      <span className="text-gray-500 font-light">Owner</span>
-                      <span className="text-gray-700 font-mono text-xs">{nft.collectorAddress}</span>
-                    </div>
-                      )}
                   </div>
                 </div>
               </div>

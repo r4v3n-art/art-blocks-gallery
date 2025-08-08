@@ -6,8 +6,8 @@ import "./globals.css"
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "Art Blocks Explorer",
-  description: "Discover and view generative art NFTs with an immersive slideshow experience",
+  title: "Art Blocks Gallery",
+  description: "Discover and view generative art NFTs with an immersive gallery experience",
 }
 
 export default function RootLayout({

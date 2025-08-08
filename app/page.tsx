@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useRouter } from "next/navigation"
+import { serializeSelection } from "@/lib/ab"
+import { Play } from "lucide-react"
 
 export default function HomePage() {
   const [searchType, setSearchType] = useState("collector")
@@ -22,17 +24,59 @@ export default function HomePage() {
     router.push(`/search?${params.toString()}`)
   }
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
+  const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
       handleSearch()
     }
   }
 
+  const startCollectionSlideshow = (collectionName: string, duration = 60) => {
+    const selection = [{ type: 'project' as const, value: collectionName }]
+    const selectionParam = serializeSelection(selection)
+    const qs = new URLSearchParams({
+      selection: selectionParam,
+      duration: duration.toString(),
+      autoPlay: 'true',
+      showInfo: 'true',
+      randomOrder: 'true',
+      showBorder: 'false',
+      fullscreen: 'true',
+    })
+    router.push(`/gallery/player?${qs.toString()}`)
+  }
+
+  const featuredCollections = [
+    {
+      name: "Chromie Squiggle",
+      artist: "Snowfro",
+      description: "Simple and easily identifiable, each squiggle embodies the soul of the Art Blocks platform.",
+      tokenCount: "10,000",
+      imageUrl: "https://media.artblocks.io/0.png",
+      projectUrl: "https://www.artblocks.io/collection/chromie-squiggle"
+    },
+    {
+      name: "Endless Nameless",
+      artist: "Rafaël Rozendaal",
+      description: "Endless Nameless is an exploration of composition. We start with a square. The square is divided into sections. The sections are filled with color pairs. Sometimes all colors are used. Sometimes fewer colors are used.",
+      tokenCount: "1,000",
+      imageUrl: "https://media.artblocks.io/120000735.png",
+      projectUrl: "https://www.artblocks.io/collection/endless-nameless"
+    },
+    {
+      name: "Marfa: Middle of Somewhere",
+      artist: "r4v3n x Brett Sylvia",
+      description: "\"Marfa: Middle of Somewhere\" is a collaborative exploration by siblings Brett Sylvia and r4v3n, capturing the duality of Marfa's identity.",
+      tokenCount: "73",
+      imageUrl: "https://media-proxy.artblocks.io/0xd9b7ec74c06c558a59afde6a16e614950730f44d/0.png",
+      projectUrl: "https://www.artblocks.io/collection/marfa-middle-of-somewhere-by-r4v3n-x-brett-sylvia"
+    }
+  ]
+
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="container mx-auto px-6 py-20">
+      <div className="container mx-auto px-6 py-12">
         {/* Header */}
-        <div className="text-center mb-16">
+        <div className="text-center mb-12">
           <h1 className="text-5xl font-light text-gray-900 mb-4 tracking-tight">
             Art Blocks Gallery
           </h1>
@@ -41,49 +85,92 @@ export default function HomePage() {
           </p>
         </div>
 
-        {/* Search Interface */}
-        <div className="max-w-2xl mx-auto">
-          <div className="bg-white border border-gray-200 rounded-none shadow-sm">
-            <div className="p-8">
-              <div className="space-y-6">
-                <div>
-                  <Select value={searchType} onValueChange={setSearchType}>
-                    <SelectTrigger className="w-full border-gray-300 rounded-none text-gray-900 font-light">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="token">Token ID</SelectItem>
-                      <SelectItem value="artist">Artist</SelectItem>
-                      <SelectItem value="project">Collection</SelectItem>
-                      <SelectItem value="collector">Collector</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+        {/* Compact Search Interface */}
+        <div className="max-w-3xl mx-auto mb-16">
+          <div className="flex gap-3">
+            <Select value={searchType} onValueChange={setSearchType}>
+              <SelectTrigger className="w-40 border-gray-300 rounded-none text-gray-900 font-light">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="token">Token URL</SelectItem>
+                <SelectItem value="artist">Artist</SelectItem>
+                <SelectItem value="project">Collection</SelectItem>
+                <SelectItem value="collector">Collector</SelectItem>
+              </SelectContent>
+            </Select>
+            <Input
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder={
+                searchType === 'token' ? 'Paste Art Blocks token URL' :
+                searchType === 'artist' ? 'Enter artist name' :
+                searchType === 'project' ? 'Enter collection name' :
+                'Enter collector name or address'
+              }
+              className="flex-1 border-gray-300 rounded-none text-gray-900 font-light"
+            />
+            <Button 
+              onClick={handleSearch} 
+              className="bg-gray-900 hover:bg-gray-800 text-white rounded-none font-light px-8"
+              disabled={!searchQuery.trim()}
+            >
+              Search
+            </Button>
+          </div>
+        </div>
 
-                <div>
-                  <Input
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    onKeyPress={handleKeyPress}
-                    placeholder={
-                      searchType === 'token' ? 'Enter token ID' :
-                      searchType === 'artist' ? 'Enter artist name' :
-                      searchType === 'project' ? 'Enter collection name' :
-                      'Enter collector name or address'
-                    }
-                    className="w-full border-gray-300 rounded-none text-gray-900 font-light text-lg py-3"
+        {/* Featured Collections */}
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-8">
+            <p className="text-gray-600 font-light text-lg">or jump into a featured collection</p>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {featuredCollections.map((collection) => (
+              <div key={collection.name} className="bg-white border border-gray-200 hover:shadow-lg transition-shadow">
+                <div className="aspect-square bg-gray-100 overflow-hidden">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img 
+                    src={collection.imageUrl}
+                    alt={`${collection.name} preview`}
+                    className="w-full h-full object-cover"
                   />
                 </div>
-
-                <Button 
-                  onClick={handleSearch} 
-                  className="w-full bg-gray-900 hover:bg-gray-800 text-white rounded-none font-light text-lg py-3"
-                  disabled={!searchQuery.trim()}
-                >
-                  Search
-                </Button>
+                <div className="p-6">
+                  <h3 className="text-xl font-light text-gray-900 mb-1">
+                    {collection.name}
+                  </h3>
+                  <p className="text-sm text-gray-600 font-light mb-3">
+                    by {collection.artist}
+                  </p>
+                  <p className="text-sm text-gray-600 font-light mb-4 line-clamp-2">
+                    {collection.description}
+                  </p>
+                  <div className="flex items-center justify-between mb-4">
+                    <span className="text-xs text-gray-500 font-light">
+                      {collection.tokenCount} pieces
+                    </span>
+                    <a 
+                      href={collection.projectUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs text-gray-600 hover:text-gray-900 underline transition-colors"
+                    >
+                      View on Art Blocks
+                    </a>
+                  </div>
+                  <Button 
+                    onClick={() => startCollectionSlideshow(collection.name)}
+                    className="w-full inline-flex items-center justify-center gap-2 bg-gray-900 hover:bg-gray-800 text-white rounded-none font-light"
+                  >
+                    <Play className="w-4 h-4" />
+                    Start Gallery
+                  </Button>
+                </div>
               </div>
-            </div>
+            ))}
           </div>
         </div>
 
