@@ -717,7 +717,6 @@ function GalleryPlayer() {
           currentNFT={currentNFT}
           nextNFT={nextNFT}
           showBorder={showBorder}
-          isFullscreen={isFullscreen}
         />
 
         <GalleryOverlayControls
