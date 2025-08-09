@@ -63,7 +63,9 @@ export function useKeyboardControls({
           break
         case 'f':
         case 'F':
-          e.preventDefault()
+          if (e.metaKey || e.ctrlKey) {
+            e.preventDefault()
+          }
           onToggleFullscreen?.()
           break
       }
