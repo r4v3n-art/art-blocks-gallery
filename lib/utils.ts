@@ -1,7 +1,7 @@
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
 import { useState, useEffect } from "react"
-import { resolveAddressToEns } from "./ab"
+import { resolveAddressToEns } from "./ab.ts"
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -20,25 +20,33 @@ export function truncateEthAddress(address: string, prefixLength = 6, suffixLeng
 // Hook to resolve and display ENS name or fallback to truncated address
 export function useEnsOrAddress(address: string | undefined): string {
   const [displayName, setDisplayName] = useState('')
-  
+
   useEffect(() => {
+    let cancelled = false
+
     if (!address) {
       setDisplayName('')
       return
     }
-    
+
     // Start with truncated address as fallback
     setDisplayName(truncateEthAddress(address))
-    
+
     // Try to resolve ENS name
-    resolveAddressToEns(address).then(ensName => {
-      if (ensName) {
-        setDisplayName(ensName)
-      }
-    }).catch(() => {
-      // Keep truncated address on error
-    })
+    resolveAddressToEns(address)
+      .then(ensName => {
+        if (!cancelled && ensName) {
+          setDisplayName(ensName)
+        }
+      })
+      .catch(() => {
+        // Keep truncated address on error
+      })
+
+    return () => {
+      cancelled = true
+    }
   }, [address])
-  
+
   return displayName
 }
