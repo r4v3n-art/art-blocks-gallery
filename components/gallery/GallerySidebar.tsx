@@ -4,6 +4,7 @@ import { ChevronLeft } from 'lucide-react'
 import { PlaybackControls } from './PlaybackControls'
 import { useEnsOrAddress } from "@/lib/utils"
 import { TokenEntry } from "@/lib/ab"
+import { ThemeToggle } from "@/components/ThemeToggle"
 
 interface NFTMeta {
   tokenId: string
@@ -85,25 +86,27 @@ export function GallerySidebar({
   const ownerDisplayName = useEnsOrAddress(currentNFT?.owner)
 
   return (
-    <div className="w-80 bg-gray-50 border-r border-gray-200 flex flex-col">
-      <div className="p-6 border-b border-gray-200 flex items-center justify-between">
+    <div className="w-80 bg-card border-r flex flex-col">
+      <div className="p-6 border-b flex items-center justify-between">
         <Button
           variant="ghost"
           size="sm"
           onClick={onExit}
-          className="text-gray-600 hover:text-gray-900 font-light"
+          className="font-light"
         >
           ← Exit Gallery
         </Button>
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={onToggleSidebar}
-          className="text-gray-600 hover:text-gray-900"
-          title="Hide sidebar (⌘I)"
-        >
-          <ChevronLeft className="w-4 h-4" />
-        </Button>
+        <div className="flex items-center gap-2">
+          <ThemeToggle />
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onToggleSidebar}
+            title="Hide sidebar (⌘I)"
+          >
+            <ChevronLeft className="w-4 h-4" />
+          </Button>
+        </div>
       </div>
 
       <div className="p-6 flex-1">
@@ -111,24 +114,24 @@ export function GallerySidebar({
           {currentNFT && (
             <>
               <div>
-                <h2 className="text-2xl font-light text-gray-900 mb-2">
+                <h2 className="text-2xl font-light mb-2">
                   {currentNFT.projectName}
                 </h2>
-                <p className="text-gray-600 font-light text-lg mb-4">
+                <p className="font-light text-lg mb-4 text-muted-foreground">
                   {currentNFT.artist}
                 </p>
                 <div className="space-y-2">
-                  <div className="text-sm text-gray-500 font-mono">
+                  <div className="text-sm font-mono text-muted-foreground">
                     #{currentNFT.invocation ?? currentNFT.tokenId}
                   </div>
                   {currentNFT.owner && (
-                    <div className="text-sm text-gray-500">
+                    <div className="text-sm text-muted-foreground">
                       <span className="font-light">Collected by </span>
                       <a 
                         href={`https://www.artblocks.io/profile/${currentNFT.owner}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="font-mono text-gray-700 hover:text-gray-900 underline transition-colors"
+                        className="font-mono underline transition-colors"
                       >
                         {ownerDisplayName}
                       </a>
@@ -137,7 +140,7 @@ export function GallerySidebar({
                 </div>
               </div>
 
-              <div className="pt-4 border-t border-gray-200">
+              <div className="pt-4 border-t">
                 <div className="space-y-2 text-xs">
                   {getProjectUrl(currentNFT.projectSlug) && (
                     <div>
@@ -145,7 +148,7 @@ export function GallerySidebar({
                         href={getProjectUrl(currentNFT.projectSlug)!}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-gray-600 hover:text-gray-900 underline transition-colors"
+                        className="underline transition-colors"
                       >
                         View Collection
                       </a>
@@ -157,7 +160,7 @@ export function GallerySidebar({
                         href={getArtistUrl(currentNFT.artistAddress)!}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-gray-600 hover:text-gray-900 underline transition-colors"
+                        className="underline transition-colors"
                       >
                         View Artist
                       </a>
@@ -169,16 +172,16 @@ export function GallerySidebar({
           )}
 
           {!isSingleItem && (
-            <div className="pt-4 border-t border-gray-200">
-              <div className="text-sm text-gray-600 font-light">
+            <div className="pt-4 border-t">
+              <div className="text-sm font-light text-muted-foreground">
                 Slide {currentIndex + 1} of {totalTokenCount || shuffledEntries.length}
               </div>
             </div>
           )}
 
           {!isSingleItem && autoPlay && (
-            <div className="pt-4 border-t border-gray-200">
-              <div className="text-sm text-gray-600 font-light mb-3">
+            <div className="pt-4 border-t">
+              <div className="text-sm font-light text-muted-foreground mb-3">
                 Duration: {formatDuration(duration)}
               </div>
               <Slider
@@ -189,7 +192,7 @@ export function GallerySidebar({
                 step={1}
                 className="w-full"
               />
-              <div className="flex justify-between text-xs text-gray-500 mt-1">
+              <div className="flex justify-between text-xs text-muted-foreground mt-1">
                 <span>5s</span>
                 <span>7d</span>
               </div>
@@ -197,13 +200,13 @@ export function GallerySidebar({
           )}
 
           {!isSingleItem && autoPlay && (
-            <div className="pt-4 border-t border-gray-200">
-              <div className="text-sm text-gray-600 font-light mb-2">
+            <div className="pt-4 border-t">
+              <div className="text-sm font-light text-muted-foreground mb-2">
                 {isPlaying ? `Next in ${timeRemaining}s` : 'Paused'}
               </div>
-              <div className="w-full bg-gray-200 h-1">
+              <div className="w-full bg-input h-1">
                 <div 
-                  className="h-full bg-gray-900 transition-all duration-1000 ease-linear"
+                  className="h-full bg-primary transition-all duration-1000 ease-linear"
                   style={{ 
                     width: `${((duration - timeRemaining) / duration) * 100}%` 
                   }}
@@ -212,44 +215,44 @@ export function GallerySidebar({
             </div>
           )}
 
-          <div className="pt-4 border-t border-gray-200">
-            <h3 className="text-sm font-light text-gray-900 mb-3">Controls</h3>
+          <div className="pt-4 border-t">
+            <h3 className="text-sm font-light mb-3">Controls</h3>
             <div className="space-y-2 text-xs">
               {!isSingleItem && (
                 <>
                   <div className="flex justify-between">
-                    <span className="text-gray-600 font-light">Next</span>
-                    <kbd className="px-2 py-1 bg-gray-200 text-gray-700 font-mono">→</kbd>
+                    <span className="font-light text-muted-foreground">Next</span>
+                    <kbd className="px-2 py-1 bg-muted text-muted-foreground font-mono">→</kbd>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-600 font-light">Previous</span>
-                    <kbd className="px-2 py-1 bg-gray-200 text-gray-700 font-mono">←</kbd>
+                    <span className="font-light text-muted-foreground">Previous</span>
+                    <kbd className="px-2 py-1 bg-muted text-muted-foreground font-mono">←</kbd>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-600 font-light">Play/Pause</span>
-                    <kbd className="px-2 py-1 bg-gray-200 text-gray-700 font-mono">Space</kbd>
+                    <span className="font-light text-muted-foreground">Play/Pause</span>
+                    <kbd className="px-2 py-1 bg-muted text-muted-foreground font-mono">Space</kbd>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-600 font-light">Toggle Shuffle</span>
-                    <kbd className="px-2 py-1 bg-gray-200 text-gray-700 font-mono">{isMac ? '⌘⇧S' : 'Ctrl+Shift+S'}</kbd>
+                    <span className="font-light text-muted-foreground">Toggle Shuffle</span>
+                    <kbd className="px-2 py-1 bg-muted text-muted-foreground font-mono">{isMac ? '⌘⇧S' : 'Ctrl+Shift+S'}</kbd>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-600 font-light">Toggle Border</span>
-                    <kbd className="px-2 py-1 bg-gray-200 text-gray-700 font-mono">{isMac ? '⌘B' : 'Ctrl+B'}</kbd>
+                    <span className="font-light text-muted-foreground">Toggle Border</span>
+                    <kbd className="px-2 py-1 bg-muted text-muted-foreground font-mono">{isMac ? '⌘B' : 'Ctrl+B'}</kbd>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-600 font-light">Fullscreen</span>
-                    <kbd className="px-2 py-1 bg-gray-200 text-gray-700 font-mono">F</kbd>
+                    <span className="font-light text-muted-foreground">Fullscreen</span>
+                    <kbd className="px-2 py-1 bg-muted text-muted-foreground font-mono">F</kbd>
                   </div>
                 </>
               )}
               <div className="flex justify-between">
-                <span className="text-gray-600 font-light">Toggle Info</span>
-                <kbd className="px-2 py-1 bg-gray-200 text-gray-700 font-mono">{isMac ? '⌘I' : 'Ctrl+I'}</kbd>
+                <span className="font-light text-muted-foreground">Toggle Info</span>
+                <kbd className="px-2 py-1 bg-muted text-muted-foreground font-mono">{isMac ? '⌘I' : 'Ctrl+I'}</kbd>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-600 font-light">Exit</span>
-                <kbd className="px-2 py-1 bg-gray-200 text-gray-700 font-mono">Esc</kbd>
+                <span className="font-light text-muted-foreground">Exit</span>
+                <kbd className="px-2 py-1 bg-muted text-muted-foreground font-mono">Esc</kbd>
               </div>
             </div>
           </div>
@@ -257,7 +260,7 @@ export function GallerySidebar({
       </div>
 
       {!isSingleItem && (
-        <div className="p-6 border-t border-gray-200">
+        <div className="p-6 border-t">
           <PlaybackControls
             isPlaying={isPlaying}
             isShuffled={isShuffled}

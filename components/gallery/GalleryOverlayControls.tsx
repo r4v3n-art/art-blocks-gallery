@@ -3,6 +3,7 @@ import { X, Info, Maximize, Minimize } from 'lucide-react'
 import { PlaybackControls } from './PlaybackControls'
 import { useEnsOrAddress } from "@/lib/utils"
 import { TokenEntry } from "@/lib/ab"
+import { ThemeToggle } from "@/components/ThemeToggle"
 
 interface NFTMeta {
   tokenId: string
@@ -64,9 +65,9 @@ export function GalleryOverlayControls({
   return (
     <>
       {autoPlay && isPlaying && (
-        <div className={`absolute top-0 left-0 w-full h-0.5 bg-gray-200 z-10 transition-opacity duration-300 ${showControls ? 'opacity-100' : 'opacity-0'}`}>
+        <div className={`absolute top-0 left-0 w-full h-0.5 bg-input z-10 transition-opacity duration-300 ${showControls ? 'opacity-100' : 'opacity-0'}`}>
           <div 
-            className="h-full bg-gray-900 transition-all duration-1000 ease-linear"
+            className="h-full bg-primary transition-all duration-1000 ease-linear"
             style={{ 
               width: `${((duration - timeRemaining) / duration) * 100}%` 
             }}
@@ -78,32 +79,33 @@ export function GalleryOverlayControls({
         variant="ghost"
         size="icon"
         onClick={onExit}
-        className={`absolute top-8 right-8 text-gray-900 hover:bg-gray-100 transition-opacity duration-300 ${showControls ? 'opacity-100' : 'opacity-0'} z-20`}
+        className={`absolute top-8 right-8 transition-opacity duration-300 ${showControls ? 'opacity-100' : 'opacity-0'} z-20`}
+        title="Exit gallery"
       >
         <X className="w-5 h-5" />
       </Button>
 
       <div className={`absolute top-8 left-8 transition-opacity duration-300 ${showControls ? 'opacity-100' : 'opacity-0'} z-20`}>
-        <div className="bg-white/95 backdrop-blur-sm border border-gray-200 px-4 py-3 max-w-sm">
+        <div className="bg-card/95 backdrop-blur-sm border px-4 py-3 max-w-sm">
           {showInfo && sidebarCollapsed && currentNFT ? (
             <div className="space-y-2">
-              <div className="text-gray-900 font-light text-lg">
+              <div className="font-light text-lg">
                 {currentNFT.projectName}
               </div>
-              <div className="text-gray-600 font-light text-sm">
+              <div className="font-light text-sm text-muted-foreground">
                 {currentNFT.artist}
               </div>
-              <div className="text-gray-500 font-mono text-xs">
+              <div className="font-mono text-xs text-muted-foreground">
                 #{currentNFT.invocation ?? currentNFT.tokenId}
               </div>
               {currentNFT.owner && (
-                <div className="text-gray-500 text-xs">
+                <div className="text-xs text-muted-foreground">
                   <span className="font-light">Collected by </span>
                   <a 
                     href={`https://www.artblocks.io/profile/${currentNFT.owner}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="font-mono text-gray-600 hover:text-gray-800 underline transition-colors"
+                    className="font-mono underline transition-colors"
                   >
                     {ownerDisplayName}
                   </a>
@@ -111,7 +113,7 @@ export function GalleryOverlayControls({
               )}
             </div>
           ) : (
-            <span className="text-gray-900 font-light text-sm">
+            <span className="font-light text-sm">
               {currentIndex + 1} / {shuffledEntries.length}
             </span>
           )}
@@ -119,7 +121,7 @@ export function GalleryOverlayControls({
       </div>
 
       <div className={`absolute bottom-0 left-0 right-0 transition-opacity duration-300 ${showControls ? 'opacity-100' : 'opacity-0'} z-20`}>
-        <div className="bg-white/95 backdrop-blur-sm border-t border-gray-200 p-6">
+        <div className="bg-card/95 backdrop-blur-sm border-t p-6">
           <div className="flex items-center justify-center gap-4">
             {!isSingleItem && (
               <PlaybackControls
@@ -137,18 +139,19 @@ export function GalleryOverlayControls({
                 variant="ghost"
                 size="icon"
                 onClick={onToggleSidebar}
-                className="text-gray-900 hover:bg-gray-100"
                 title="Show sidebar (⌘I)"
               >
                 <Info className="w-5 h-5" />
               </Button>
             )}
 
+            {/* Theme Toggle visible in overlay bar */}
+            <ThemeToggle />
+
             <Button
               variant="ghost"
               size="icon"
               onClick={onToggleFullscreen}
-              className="text-gray-900 hover:bg-gray-100"
               title={isFullscreen ? "Exit fullscreen (F)" : "Enter fullscreen (F)"}
             >
               {isFullscreen ? <Minimize className="w-5 h-5" /> : <Maximize className="w-5 h-5" />}
@@ -159,21 +162,19 @@ export function GalleryOverlayControls({
                 variant="ghost"
                 size="icon"
                 onClick={onExit}
-                className="text-gray-900 hover:bg-gray-100"
                 title="Exit gallery"
               >
                 <X className="w-5 h-5" />
               </Button>
             )}
           </div>
-          
           {!isSingleItem && (
             <div className="text-center mt-3 space-y-1">
-              <div className="text-gray-600 text-sm font-light">
+              <div className="text-sm font-light text-muted-foreground">
                 Slide {currentIndex + 1} of {shuffledEntries.length}
               </div>
               {autoPlay && (
-                <div className="text-gray-600 text-sm font-light">
+                <div className="text-sm font-light text-muted-foreground">
                   {isPlaying ? `Next in ${timeRemaining}s` : 'Paused'}
                 </div>
               )}
