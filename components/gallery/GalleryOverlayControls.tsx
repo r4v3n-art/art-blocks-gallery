@@ -3,7 +3,6 @@ import { X, Info, Maximize, Minimize } from 'lucide-react'
 import { PlaybackControls } from './PlaybackControls'
 import { useEnsOrAddress } from "@/lib/utils"
 import { TokenEntry } from "@/lib/ab"
-import { ThemeToggle } from "@/components/ThemeToggle"
 
 interface NFTMeta {
   tokenId: string
@@ -144,9 +143,6 @@ export function GalleryOverlayControls({
                 <Info className="w-5 h-5" />
               </Button>
             )}
-
-            {/* Theme Toggle visible in overlay bar */}
-            <ThemeToggle />
 
             <Button
               variant="ghost"

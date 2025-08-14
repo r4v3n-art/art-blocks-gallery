@@ -251,6 +251,10 @@ export function GallerySidebar({
                 <kbd className="px-2 py-1 bg-muted text-muted-foreground font-mono">{isMac ? '⌘I' : 'Ctrl+I'}</kbd>
               </div>
               <div className="flex justify-between">
+                <span className="font-light text-muted-foreground">Toggle Theme</span>
+                <kbd className="px-2 py-1 bg-muted text-muted-foreground font-mono">T</kbd>
+              </div>
+              <div className="flex justify-between">
                 <span className="font-light text-muted-foreground">Exit</span>
                 <kbd className="px-2 py-1 bg-muted text-muted-foreground font-mono">Esc</kbd>
               </div>
