@@ -646,10 +646,10 @@ function GalleryPlayer() {
   if (shuffledEntries.length === 0) {
     if (isLoadingComplete) {
       return (
-        <div className="fixed inset-0 bg-white flex items-center justify-center">
-          <div className="text-gray-900 text-center">
+        <div className="fixed inset-0 flex items-center justify-center">
+          <div className="text-center">
             <p className="text-xl mb-4 font-light">No tokens to display</p>
-            <Button variant="ghost" onClick={() => router.back()} className="text-gray-600 hover:text-gray-900 font-light">← Back</Button>
+            <Button variant="ghost" onClick={() => router.back()} className="font-light">← Back</Button>
           </div>
         </div>
       )
@@ -669,10 +669,10 @@ function GalleryPlayer() {
 
   if (!currentNFT) {
     return (
-      <div className="fixed inset-0 bg-white flex items-center justify-center">
-        <div className="text-gray-900 text-center">
+      <div className="fixed inset-0 flex items-center justify-center">
+        <div className="text-center">
           <p className="text-xl mb-4 font-light">Loading token…</p>
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-foreground mx-auto"></div>
         </div>
       </div>
     )
@@ -680,7 +680,7 @@ function GalleryPlayer() {
 
 
   return (
-    <div className="fixed inset-0 bg-white overflow-hidden flex">
+    <div className="fixed inset-0 overflow-hidden flex">
       {showInfo && !sidebarCollapsed && (
         <GallerySidebar
           currentNFT={currentNFT}
