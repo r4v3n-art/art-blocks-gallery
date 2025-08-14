@@ -29,7 +29,7 @@ export function ArtworkDisplay({
     <div className={`absolute inset-0 flex items-center justify-center ${showBorder ? 'p-12' : ''}`}>
       {/* Container with border that contains the iframe */}
       <div 
-        className={`w-full h-full relative ${showBorder ? 'bg-white p-4' : ''}`}
+        className={`w-full h-full relative ${showBorder ? 'bg-card p-4' : ''}`}
         style={showBorder ? {
           boxShadow: '0 20px 40px rgba(0,0,0,0.15), 0 10px 20px rgba(0,0,0,0.1), inset 0 0 0 1px rgba(0,0,0,0.05)'
         } : undefined}
