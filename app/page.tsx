@@ -73,53 +73,53 @@ export default function HomePage() {
   ]
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen">
       <div className="container mx-auto px-6 py-12">
         {/* Header */}
         <div className="text-center mb-12">
-          <h1 className="text-5xl font-light text-gray-900 mb-4 tracking-tight">
+          <h1 className="text-5xl font-light mb-4 tracking-tight">
             Art Blocks Gallery
           </h1>
-          <p className="text-lg text-gray-600 font-light">
+          <p className="text-lg font-light">
             The best way to display your generative art collection
           </p>
         </div>
 
         {/* Compact Search Interface */}
-        <div className="max-w-3xl mx-auto mb-16">
-          <div className="flex gap-3">
-            <Select value={searchType} onValueChange={setSearchType}>
-              <SelectTrigger className="w-40 border-gray-300 rounded-none text-gray-900 font-light">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="token">Token URL</SelectItem>
-                <SelectItem value="artist">Artist</SelectItem>
-                <SelectItem value="project">Collection</SelectItem>
-                <SelectItem value="collector">Collector</SelectItem>
-              </SelectContent>
-            </Select>
-            <Input
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder={
-                searchType === 'token' ? 'Paste Art Blocks token URL' :
-                searchType === 'artist' ? 'Enter artist name' :
-                searchType === 'project' ? 'Enter collection name' :
-                'Enter collector name or address'
-              }
-              className="flex-1 border-gray-300 rounded-none text-gray-900 font-light"
-            />
-            <Button 
-              onClick={handleSearch} 
-              className="bg-gray-900 hover:bg-gray-800 text-white rounded-none font-light px-8"
-              disabled={!searchQuery.trim()}
-            >
-              Search
-            </Button>
+                  <div className="max-w-3xl mx-auto mb-16">
+            <div className="flex gap-3">
+              <Select value={searchType} onValueChange={setSearchType}>
+                <SelectTrigger className="w-40 rounded-none font-light">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="token">Token URL</SelectItem>
+                  <SelectItem value="artist">Artist</SelectItem>
+                  <SelectItem value="project">Collection</SelectItem>
+                  <SelectItem value="collector">Collector</SelectItem>
+                </SelectContent>
+              </Select>
+              <Input
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder={
+                  searchType === 'token' ? 'Paste Art Blocks token URL' :
+                  searchType === 'artist' ? 'Enter artist name' :
+                  searchType === 'project' ? 'Enter collection name' :
+                  'Enter collector name or address'
+                }
+                className="flex-1 rounded-none font-light"
+              />
+              <Button 
+                onClick={handleSearch} 
+                className="rounded-none font-light px-8"
+                disabled={!searchQuery.trim()}
+              >
+                Search
+              </Button>
+            </div>
           </div>
-        </div>
 
         {/* Featured Collections */}
         <div className="max-w-6xl mx-auto">

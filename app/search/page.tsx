@@ -667,7 +667,7 @@ function SearchResults() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen">
       <div className="container mx-auto px-6 py-8">
         {/* Inline search controls + cart */}
         <div className="flex flex-col gap-4 mb-6">
