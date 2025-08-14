@@ -27,7 +27,6 @@ export function PlaybackControls({
         size="icon"
         onClick={onPrevious}
         disabled={disabled}
-        className="text-gray-900 hover:bg-gray-200"
       >
         <SkipBack className="w-5 h-5" />
       </Button>
@@ -37,7 +36,6 @@ export function PlaybackControls({
         size="icon"
         onClick={onTogglePlayPause}
         disabled={disabled}
-        className="text-gray-900 hover:bg-gray-200"
       >
         {isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
       </Button>
@@ -47,7 +45,6 @@ export function PlaybackControls({
         size="icon"
         onClick={onNext}
         disabled={disabled}
-        className="text-gray-900 hover:bg-gray-200"
       >
         <SkipForward className="w-5 h-5" />
       </Button>
@@ -57,7 +54,7 @@ export function PlaybackControls({
         size="icon"
         onClick={onToggleShuffle}
         disabled={disabled}
-        className={`${isShuffled ? 'text-gray-900 bg-gray-200' : 'text-gray-900'} hover:bg-gray-200 ml-2`}
+        className={isShuffled ? 'bg-accent text-accent-foreground' : undefined}
         title={isShuffled ? "Shuffle is on" : "Shuffle is off"}
       >
         <Shuffle className="w-5 h-5" />

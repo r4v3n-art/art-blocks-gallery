@@ -1,7 +1,6 @@
 import type { Metadata } from "next"
 import { Inter } from 'next/font/google'
 import "./globals.css"
-import { ThemeToggle } from "@/components/ThemeToggle"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -43,9 +42,6 @@ export default function RootLayout({
         <ThemeInitScript />
       </head>
       <body className={inter.className}>
-        <div className="fixed right-4 top-4 z-50">
-          <ThemeToggle />
-        </div>
         {children}
       </body>
     </html>

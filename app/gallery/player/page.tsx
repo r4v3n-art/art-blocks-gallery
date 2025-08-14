@@ -10,6 +10,8 @@ import { GalleryOverlayControls } from "@/components/gallery/GalleryOverlayContr
 import { ArtworkDisplay } from "@/components/gallery/ArtworkDisplay"
 import { useKeyboardControls } from "@/hooks/useKeyboardControls"
 
+const THEME_KEY = 'abg-theme'
+
 type NFTMeta = {
   tokenId: string
   projectName?: string
@@ -82,12 +84,27 @@ function GalleryPlayer() {
   const [isShuffled, setIsShuffled] = useState(initialRandomOrder)
   const tokenIdsParam = searchParams.get('tokens')
 
+  // Theme toggle via keyboard
+  const onToggleTheme = useCallback(() => {
+    try {
+      const root = document.documentElement
+      const willBeDark = !root.classList.contains('dark')
+      if (willBeDark) {
+        root.classList.add('dark')
+        localStorage.setItem(THEME_KEY, 'dark')
+      } else {
+        root.classList.remove('dark')
+        localStorage.setItem(THEME_KEY, 'light')
+      }
+    } catch {}
+  }, [])
+
   // New query param modes
   const selectionParam = searchParams.get('selection') || ''
 
   // Create shuffled entries only when slideshow entries are first set
-  const createShuffledEntries = useCallback((entries: TokenEntry[], shouldShuffle: boolean) => {
-    const base = [...entries]
+  const createShuffledEntries = useCallback((Entries: TokenEntry[], shouldShuffle: boolean) => {
+    const base = [...Entries]
     const shuffled = shouldShuffle ? base.sort(() => Math.random() - 0.5) : base
     setShuffledEntries(shuffled)
   }, [])
@@ -548,7 +565,8 @@ function GalleryPlayer() {
     onToggleSidebar: toggleSidebar,
     onToggleShuffle: isSingleItem ? undefined : toggleShuffle,
     onToggleBorder: toggleBorder,
-    onToggleFullscreen: toggleFullscreen
+    onToggleFullscreen: toggleFullscreen,
+    onToggleTheme
   })
 
   // Convert current entry to NFTMeta format
@@ -589,7 +607,6 @@ function GalleryPlayer() {
     }
   }, [nextEntry])
 
-
   // Auto-start playing once loaded
   useEffect(() => {
     if (currentNFT && !isPlaying && autoPlay) {
@@ -613,7 +630,6 @@ function GalleryPlayer() {
       return () => clearTimeout(timer)
     }
   }, [currentNFT, startFullscreen, isFullscreen, userExitedFullscreen])
-
 
   // Reset timer when duration changes
   useEffect(() => {
