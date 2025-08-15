@@ -723,11 +723,14 @@ function GalleryPlayer() {
       )}
 
       <div 
-        className={`flex-1 relative ${showBorder ? 'bg-gradient-to-br from-stone-50 to-stone-100' : 'bg-gray-100'}`}
-        style={showBorder ? {
-          backgroundImage: `radial-gradient(circle at 1px 1px, rgba(0,0,0,0.02) 1px, transparent 0)`,
-          backgroundSize: '20px 20px'
-        } : undefined}
+        className={`flex-1 relative ${showBorder ? 'bg-gradient-to-br from-stone-50 to-stone-100' : 'bg-background'}`}
+        style={{
+          ...(showBorder ? {
+            backgroundImage: `radial-gradient(circle at 1px 1px, rgba(0,0,0,0.02) 1px, transparent 0)`,
+            backgroundSize: '20px 20px'
+          } : {}),
+          cursor: showControls ? 'default' : 'none'
+        }}
       >
         <ArtworkDisplay
           currentNFT={currentNFT}
