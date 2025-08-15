@@ -20,9 +20,37 @@ function ThemeInitScript() {
     var key='abg-theme';
     var stored=localStorage.getItem(key);
     var prefersDark=window.matchMedia('(prefers-color-scheme: dark)').matches;
-    var useDark = stored ? stored === 'dark' : prefersDark;
+    
+    // If user has explicitly chosen a theme, use that
+    // Otherwise, default to OS preference
+    var useDark;
+    if (stored === 'dark' || stored === 'light') {
+      useDark = stored === 'dark';
+    } else {
+      useDark = prefersDark;
+    }
+    
     var root=document.documentElement;
-    if(useDark){ root.classList.add('dark'); } else { root.classList.remove('dark'); }
+    if(useDark){ 
+      root.classList.add('dark'); 
+    } else { 
+      root.classList.remove('dark'); 
+    }
+    
+    // Listen for OS theme changes and update if user hasn't made explicit choice
+    var mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    mediaQuery.addEventListener('change', function(e) {
+      var currentStored = localStorage.getItem(key);
+      // Only auto-update if user hasn't explicitly chosen a theme
+      if (currentStored !== 'dark' && currentStored !== 'light') {
+        var newPrefersDark = e.matches;
+        if (newPrefersDark) {
+          root.classList.add('dark');
+        } else {
+          root.classList.remove('dark');
+        }
+      }
+    });
   }catch(e){}
 })();
         `.trim()
