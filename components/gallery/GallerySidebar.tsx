@@ -109,7 +109,7 @@ export function GallerySidebar({
         </div>
       </div>
 
-      <div className="p-6 flex-1">
+      <div className="p-6 flex-1 overflow-y-auto">
         <div className="space-y-6">
           {currentNFT && (
             <>
