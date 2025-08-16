@@ -647,7 +647,7 @@ function SearchResults() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-[#2d2d2e]">
         <div className="container mx-auto px-4 py-8">
           <div className="flex items-center gap-4 mb-8">
             <Link href="/">
@@ -658,8 +658,8 @@ function SearchResults() {
             </Link>
           </div>
           <div className="text-center py-16">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-slate-900 dark:border-slate-100 mx-auto mb-4"></div>
-            <p className="text-slate-600 dark:text-slate-400">Searching Art Blocks...</p>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-slate-900 dark:border-gray-100 mx-auto mb-4"></div>
+            <p className="text-slate-600 dark:text-gray-400">Searching Art Blocks...</p>
           </div>
         </div>
       </div>
@@ -667,13 +667,13 @@ function SearchResults() {
   }
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-[#2d2d2e]">
       <div className="container mx-auto px-6 py-8">
         {/* Inline search controls + cart */}
         <div className="flex flex-col gap-4 mb-6">
           <div className="flex gap-3">
             <Select value={typeInput} onValueChange={setTypeInput}>
-              <SelectTrigger className="w-40 border-gray-300 rounded-none text-gray-900 font-light">
+              <SelectTrigger className="w-40 border-gray-300 dark:border-gray-600 rounded-none text-gray-900 dark:text-gray-100 font-light">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -693,15 +693,15 @@ function SearchResults() {
                 typeInput === 'project' ? 'Search collections...' :
                 'Search collectors...'
               }
-              className="flex-1 border-gray-300 rounded-none text-gray-900 font-light"
+              className="flex-1 border-gray-300 dark:border-gray-600 rounded-none text-gray-900 dark:text-gray-100 font-light"
             />
-            <Button onClick={handleSearch} className="bg-gray-900 hover:bg-gray-800 rounded-none">Search</Button>
+            <Button onClick={handleSearch} className="bg-gray-900 hover:bg-gray-800 dark:bg-gray-100 dark:hover:bg-gray-200 dark:text-gray-900 rounded-none">Search</Button>
           </div>
           <div className="flex flex-col gap-2">
             <div className="flex items-center justify-between">
-            <div className="text-sm text-gray-600">Selection: {cart.length} item{cart.length === 1 ? '' : 's'}{selectionLoading ? ' · computing…' : selectionTotal > 0 ? ` · ${selectionTotal} tokens` : ''}</div>
+            <div className="text-sm text-gray-600 dark:text-gray-400">Selection: {cart.length} item{cart.length === 1 ? '' : 's'}{selectionLoading ? ' · computing…' : selectionTotal > 0 ? ` · ${selectionTotal} tokens` : ''}</div>
               <div className="flex gap-2">
-                <Button onClick={startFromCart} className="bg-gray-900 hover:bg-gray-800 rounded-none" disabled={cart.length === 0}>
+                <Button onClick={startFromCart} className="bg-gray-900 hover:bg-gray-800 dark:bg-gray-100 dark:hover:bg-gray-200 dark:text-gray-900 rounded-none" disabled={cart.length === 0}>
                   Start Gallery {selectionLoading ? '' : selectionTotal > 0 ? `(${selectionTotal})` : ''}
                 </Button>
               </div>
@@ -709,11 +709,11 @@ function SearchResults() {
             {cart.length > 0 && (
               <div className="flex flex-wrap gap-2">
                 {cart.map((item) => (
-                  <span key={`${item.type}:${item.value}`} className="inline-flex items-center gap-2 bg-gray-200 text-gray-800 rounded-full px-3 py-1 text-xs">
-                    <span className="uppercase tracking-wide text-[10px] text-gray-600">{item.type}</span>
+                  <span key={`${item.type}:${item.value}`} className="inline-flex items-center gap-2 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-full px-3 py-1 text-xs">
+                    <span className="uppercase tracking-wide text-[10px] text-gray-600 dark:text-gray-400">{item.type}</span>
                     <span className="font-mono">{item.value}</span>
                     <button
-                      className="ml-1 rounded-full w-4 h-4 flex items-center justify-center text-gray-600 hover:text-gray-900"
+                      className="ml-1 rounded-full w-4 h-4 flex items-center justify-center text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
                       aria-label="Remove"
                       onClick={() => removeFromSelection(item)}
                     >
@@ -728,13 +728,13 @@ function SearchResults() {
         <div className="flex items-center justify-between mb-12">
           <div className="flex items-center gap-6">
             <Link href="/">
-              <Button variant="ghost" className="text-gray-600 hover:text-gray-900 font-light">
+              <Button variant="ghost" className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 font-light">
                 ← Back
               </Button>
             </Link>
             <div>
-              <h1 className="text-3xl font-light text-gray-900">Search Results</h1>
-              <p className="text-gray-600 font-light mt-1">
+              <h1 className="text-3xl font-light text-gray-900 dark:text-gray-100">Search Results</h1>
+              <p className="text-gray-600 dark:text-gray-400 font-light mt-1">
                 {searchType === 'artist' && `${artistList.length} ${artistList.length === 1 ? 'artist' : 'artists'} found`}
                 {searchType === 'project' && `${projectList.length} ${projectList.length === 1 ? 'collection' : 'collections'} found`}
                 {searchType === 'collector' && `${collectorList.length} ${collectorList.length === 1 ? 'collector' : 'collectors'} found`}
@@ -760,8 +760,8 @@ function SearchResults() {
 
           {tokenRefs.length === 0 && !(searchType === 'artist' && artistList.length > 0) && !(searchType === 'project' && projectList.length > 0) && !(searchType === 'collector' && collectorList.length > 0) ? (
           <div className="text-center py-24">
-            <p className="text-gray-600 font-light text-lg">No results found</p>
-              <p className="text-gray-500 font-light text-sm mt-2">
+            <p className="text-gray-600 dark:text-gray-400 font-light text-lg">No results found</p>
+              <p className="text-gray-500 dark:text-gray-500 font-light text-sm mt-2">
                 {searchType === 'token' ? 'Try pasting a valid Art Blocks token URL (you can input comma-separated URLs).' : 'Try refining your search.'}
               </p>
           </div>
@@ -769,11 +769,11 @@ function SearchResults() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
             {searchType === 'artist' && artistList.length > 0 ? (
               artistList.map((a) => (
-                <div key={a.name} className="bg-white border border-gray-200 hover:shadow-md transition-shadow">
-                  <div className="aspect-square bg-gray-100 flex items-center justify-center">
+                <div key={a.name} className="bg-white dark:bg-[#2d2d2e] border border-gray-200 dark:border-gray-700 hover:shadow-md dark:hover:shadow-lg dark:hover:shadow-gray-900/20 transition-shadow">
+                  <div className="aspect-square bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
                     <div className="text-center p-8">
-                      <h3 className="font-light text-gray-900 text-xl mb-2">{a.name}</h3>
-                      <p className="text-gray-600 font-light">{a.total} tokens</p>
+                      <h3 className="font-light text-gray-900 dark:text-gray-100 text-xl mb-2">{a.name}</h3>
+                      <p className="text-gray-600 dark:text-gray-400 font-light">{a.total} tokens</p>
                       <div className="mt-4">
                         <Button variant="outline" className="rounded-none" onClick={() => addToSelection({ type: 'artist', value: a.name })} disabled={isInCart({ type: 'artist', value: a.name })}>
                           {isInCart({ type: 'artist', value: a.name }) ? 'Added' : 'Add to Selection'}
@@ -785,8 +785,8 @@ function SearchResults() {
               ))
             ) : searchType === 'project' && projectList.length > 0 ? (
               projectList.map((p) => (
-                <div key={`${p.name}-${p.artist ?? ''}`} className="bg-white border border-gray-200 hover:shadow-md transition-shadow">
-                  <div className="aspect-square bg-gray-100 overflow-hidden">
+                <div key={`${p.name}-${p.artist ?? ''}`} className="bg-white dark:bg-[#2d2d2e] border border-gray-200 dark:border-gray-700 hover:shadow-md dark:hover:shadow-lg dark:hover:shadow-gray-900/20 transition-shadow">
+                  <div className="aspect-square bg-gray-100 dark:bg-gray-700 overflow-hidden">
                     {p.imageUrl ? (
                       /* eslint-disable-next-line @next/next/no-img-element */
                       <img 
@@ -797,18 +797,18 @@ function SearchResults() {
                     ) : (
                       <div className="w-full h-full flex items-center justify-center">
                         <div className="text-center p-8">
-                          <h3 className="font-light text-gray-600 text-lg">{p.name}</h3>
+                          <h3 className="font-light text-gray-600 dark:text-gray-400 text-lg">{p.name}</h3>
                         </div>
                       </div>
                     )}
                   </div>
                   <div className="p-6">
-                    <h3 className="font-light text-gray-900 text-lg mb-1">{p.name}</h3>
-                    {p.artist && (<p className="text-gray-600 font-light text-sm mb-3">{p.artist}</p>)}
+                    <h3 className="font-light text-gray-900 dark:text-gray-100 text-lg mb-1">{p.name}</h3>
+                    {p.artist && (<p className="text-gray-600 dark:text-gray-400 font-light text-sm mb-3">{p.artist}</p>)}
                     <div className="space-y-2 text-xs">
                       <div className="flex justify-between">
-                        <span className="text-gray-500 font-light">Tokens</span>
-                        <span className="text-gray-700">{p.total}</span>
+                        <span className="text-gray-500 dark:text-gray-400 font-light">Tokens</span>
+                        <span className="text-gray-700 dark:text-gray-300">{p.total}</span>
                       </div>
                       <div className="pt-2">
                         <Button variant="outline" className="rounded-none" onClick={() => addToSelection({ type: 'project', value: p.name })} disabled={isInCart({ type: 'project', value: p.name })}>
@@ -821,12 +821,12 @@ function SearchResults() {
               ))
             ) : searchType === 'collector' && collectorList.length > 0 ? (
               collectorList.map((c) => (
-                <div key={c.address} className="bg-white border border-gray-200 hover:shadow-md transition-shadow">
-                  <div className="aspect-square bg-gray-100 flex items-center justify-center">
+                <div key={c.address} className="bg-white dark:bg-[#2d2d2e] border border-gray-200 dark:border-gray-700 hover:shadow-md dark:hover:shadow-lg dark:hover:shadow-gray-900/20 transition-shadow">
+                  <div className="aspect-square bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
                     <div className="text-center p-8">
-                      <h3 className="font-light text-gray-900 text-xl mb-2">{c.displayName ?? c.address}</h3>
-                      <p className="text-gray-600 font-light text-xs">{c.address}</p>
-                      <p className="text-gray-600 font-light">{c.total} tokens</p>
+                      <h3 className="font-light text-gray-900 dark:text-gray-100 text-xl mb-2">{c.displayName ?? c.address}</h3>
+                      <p className="text-gray-600 dark:text-gray-400 font-light text-xs">{c.address}</p>
+                      <p className="text-gray-600 dark:text-gray-400 font-light">{c.total} tokens</p>
                       <div className="mt-4">
                         <Button variant="outline" className="rounded-none" onClick={() => addToSelection({ type: 'collector', value: c.address })} disabled={isInCart({ type: 'collector', value: c.address })}>
                           {isInCart({ type: 'collector', value: c.address }) ? 'Added' : 'Add to Selection'}
@@ -843,8 +843,8 @@ function SearchResults() {
                 generatorUrl: composeGeneratorUrl(ref.tokenId, ref.contractAddress),
               } as SearchResult
               return (
-              <div key={ref.tokenId} className="bg-white border border-gray-200 hover:shadow-md transition-shadow">
-                <div className="aspect-square bg-gray-100 overflow-hidden">
+              <div key={ref.tokenId} className="bg-white dark:bg-[#2d2d2e] border border-gray-200 dark:border-gray-700 hover:shadow-md dark:hover:shadow-lg dark:hover:shadow-gray-900/20 transition-shadow">
+                <div className="aspect-square bg-gray-100 dark:bg-gray-700 overflow-hidden">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img 
                     src={nft.imageUrl || `https://media.artblocks.io/${ref.tokenId}.png`}
@@ -854,22 +854,22 @@ function SearchResults() {
                 </div>
                 <div className="p-6">
                   {nft.projectName && (
-                  <h3 className="font-light text-gray-900 text-lg mb-1">
+                  <h3 className="font-light text-gray-900 dark:text-gray-100 text-lg mb-1">
                     {nft.projectName}{nft.invocation ? ` #${nft.invocation}` : ''}
                   </h3>
                   )}
                   {nft.artist && (
-                  <p className="text-gray-600 font-light text-sm mb-3">{nft.artist}</p>
+                  <p className="text-gray-600 dark:text-gray-400 font-light text-sm mb-3">{nft.artist}</p>
                   )}
                   <div className="space-y-2 text-xs">
                     <div className="flex justify-between">
-                      <span className="text-gray-500 font-light">Token</span>
-                      <span className="text-gray-700 font-mono">#{ref.tokenId}</span>
+                      <span className="text-gray-500 dark:text-gray-400 font-light">Token</span>
+                      <span className="text-gray-700 dark:text-gray-300 font-mono">#{ref.tokenId}</span>
                     </div>
                     {nft.collectorAddress && (
                       <div className="flex justify-between">
-                        <span className="text-gray-500 font-light">Owner</span>
-                        <span className="text-gray-700 font-mono text-xs">{truncateEthAddress(nft.collectorAddress)}</span>
+                        <span className="text-gray-500 dark:text-gray-400 font-light">Owner</span>
+                        <span className="text-gray-700 dark:text-gray-300 font-mono text-xs">{truncateEthAddress(nft.collectorAddress)}</span>
                       </div>
                     )}
                     <div className="pt-2">
@@ -891,7 +891,13 @@ function SearchResults() {
 
 export default function SearchPage() {
   return (
-    <Suspense fallback={<div>Loading...</div>}>
+    <Suspense fallback={
+      <div className="fixed inset-0 flex items-center justify-center bg-background">
+        <div className="text-center">
+          <p className="text-xl font-light text-foreground">Loading...</p>
+        </div>
+      </div>
+    }>
       <SearchResults />
     </Suspense>
   )

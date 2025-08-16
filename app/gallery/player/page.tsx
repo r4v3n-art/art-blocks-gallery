@@ -662,9 +662,9 @@ function GalleryPlayer() {
   if (shuffledEntries.length === 0) {
     if (isLoadingComplete) {
       return (
-        <div className="fixed inset-0 flex items-center justify-center">
+        <div className="fixed inset-0 flex items-center justify-center bg-background">
           <div className="text-center">
-            <p className="text-xl mb-4 font-light">No tokens to display</p>
+            <p className="text-xl mb-4 font-light text-foreground">No tokens to display</p>
             <Button variant="ghost" onClick={() => router.back()} className="font-light">← Back</Button>
           </div>
         </div>
@@ -685,9 +685,9 @@ function GalleryPlayer() {
 
   if (!currentNFT) {
     return (
-      <div className="fixed inset-0 flex items-center justify-center">
+      <div className="fixed inset-0 flex items-center justify-center bg-background">
         <div className="text-center">
-          <p className="text-xl mb-4 font-light">Loading token…</p>
+          <p className="text-xl mb-4 font-light text-foreground">Loading token…</p>
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-foreground mx-auto"></div>
         </div>
       </div>
@@ -769,7 +769,13 @@ function GalleryPlayer() {
 
 export default function GalleryPlayerPage() {
   return (
-    <Suspense fallback={<div>Loading...</div>}>
+    <Suspense fallback={
+      <div className="fixed inset-0 flex items-center justify-center bg-background">
+        <div className="text-center">
+          <p className="text-xl font-light text-foreground">Loading...</p>
+        </div>
+      </div>
+    }>
       <GalleryPlayer />
     </Suspense>
   )
