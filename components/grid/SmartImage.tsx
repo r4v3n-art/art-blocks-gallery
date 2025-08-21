@@ -31,7 +31,7 @@ export function SmartImage({
   const [currentSize, setCurrentSize] = useState<ImageSize>('thumbnail')
   const [loadedSizes, setLoadedSizes] = useState<Set<ImageSize>>(new Set())
   const [isLoading, setIsLoading] = useState(true)
-  const [, setHasError] = useState(false)
+  const [hasError, setHasError] = useState(false)
   const [retryCount, setRetryCount] = useState(0)
   const [retryTimeoutId, setRetryTimeoutId] = useState<NodeJS.Timeout | null>(null)
   const MAX_RETRIES = 3
@@ -50,7 +50,7 @@ export function SmartImage({
 
     const loadImageSize = async (size: ImageSize, retriesLeft: number = MAX_RETRIES): Promise<void> => {
       try {
-        const url = token.imageUrl || composeMediaUrl(token.tokenId, token.contractAddress, size)
+        const url = token.imageUrl || composeMediaUrl(token.tokenId, token.contractAddress, size, token.projectId)
         const cacheKey = `${token.tokenId}-${size}`
         
         // Check if image is already in cache
@@ -99,7 +99,7 @@ export function SmartImage({
         }
         onLoad()
         
-      } catch {
+      } catch (error) {
         console.log(`Failed to load ${size} for token ${token.tokenId}, retries left: ${retriesLeft}`)
         
         // If thumbnail fails on first try, immediately try standard/HD
@@ -171,7 +171,7 @@ export function SmartImage({
       // Target size already loaded, just switch to it
       setCurrentSize(targetSize)
     }
-  }, [isVisible, isZooming, targetSize, loadedSizes, token, isEngine, onLoad, onError, onThumbnailLoad, retryCount])
+  }, [isVisible, isZooming, targetSize, loadedSizes, token, isEngine, onLoad, onError, onThumbnailLoad])
   
   // Clean up timeouts on unmount
   useEffect(() => {
@@ -186,7 +186,7 @@ export function SmartImage({
   const handleImageLoad = useCallback(() => {
     setIsLoading(false)
     onLoad()
-  }, [onLoad])
+  }, [onLoad, token.tokenId])
 
   // Handle image error from img element - don't set permanent error
   const handleImageError = useCallback(() => {
@@ -196,7 +196,7 @@ export function SmartImage({
     setIsLoading(true)
   }, [token.tokenId])
 
-  const imageUrl = token.imageUrl || composeMediaUrl(token.tokenId, token.contractAddress, currentSize)
+  const imageUrl = token.imageUrl || composeMediaUrl(token.tokenId, token.contractAddress, currentSize, token.projectId)
 
   return (
     <div className={`relative bg-white ${className}`} style={{ width: '100%', height: '100%' }}>

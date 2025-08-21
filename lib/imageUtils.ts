@@ -11,7 +11,8 @@ export type ImageSize = 'thumbnail' | 'standard' | 'hd'
 export function composeMediaUrl(
   tokenId: string, 
   contractAddress?: string, 
-  size: ImageSize = 'standard'
+  size: ImageSize = 'standard',
+  projectId?: string
 ): string {
   // Engine contracts only support standard size
   if (contractAddress && contractAddress !== '0x059edd72cd353df5106d2b9cc5ab83a52287ac3a') {
