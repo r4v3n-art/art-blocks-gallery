@@ -7,6 +7,12 @@ const inter = Inter({ subsets: ["latin"] })
 export const metadata: Metadata = {
   title: "Art Blocks Gallery",
   description: "Discover and view generative art NFTs with an immersive gallery experience",
+  viewport: {
+    width: 'device-width',
+    initialScale: 1,
+    maximumScale: 1,
+    userScalable: false,
+  },
 }
 
 function ThemeInitScript() {

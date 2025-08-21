@@ -1,0 +1,81 @@
+/* Performance optimizations for grid gallery */
+
+/* Remove default body margins for grid pages */
+body {
+  margin: 0;
+  padding: 0;
+}
+
+/* Force GPU acceleration */
+.grid-container {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  will-change: scroll-position;
+}
+
+/* Optimize image rendering */
+.grid-image {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  will-change: contents;
+  contain: layout style paint;
+  content-visibility: auto;
+}
+
+/* Smooth scrolling with GPU acceleration */
+.grid-scroll {
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+}
+
+/* Reduce repaints during zoom */
+.grid-zooming {
+  pointer-events: none;
+}
+
+.grid-zooming * {
+  will-change: transform;
+}
+
+/* Optimize layout calculations */
+.grid-cell {
+  contain: layout style paint;
+  content-visibility: auto;
+}
+
+/* Disable expensive effects during scroll */
+@media (prefers-reduced-motion: no-preference) {
+  .grid-container {
+    scroll-behavior: smooth;
+  }
+}
+
+/* Hardware accelerated transforms */
+.transform-gpu {
+  transform: translateZ(0);
+  will-change: transform;
+}
+
+/* Override react-zoom-pan-pinch default overflow hidden */
+.transform-component-module_wrapper__SPB86 {
+  overflow: visible !important;
+}
+
+/* Optimize react-window scrollbar */
+.scrollbar-thin::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(0, 0, 0, 0.3);
+}
