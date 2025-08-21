@@ -2,18 +2,7 @@
 
 import { useState, useMemo, useCallback, useEffect, useRef, CSSProperties } from "react"
 import { FixedSizeGrid as Grid } from "react-window"
-import dynamic from "next/dynamic"
-
-// Dynamically import react-zoom-pan-pinch to ensure it only loads on client side
-const TransformWrapper = dynamic(
-  () => import("react-zoom-pan-pinch").then((mod) => ({ default: mod.TransformWrapper })),
-  { ssr: false }
-)
-
-const TransformComponent = dynamic(
-  () => import("react-zoom-pan-pinch").then((mod) => ({ default: mod.TransformComponent })),
-  { ssr: false }
-)
+import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch"
 import { useGridData } from "@/hooks/useGridData"
 import { useImageLoading } from "@/hooks/useImageLoading"
 import { GridLoadingState } from "./GridLoadingState"
@@ -67,6 +56,7 @@ const Cell = ({ columnIndex, rowIndex, style, data }: {
 export function GridGallery({ slug, columns = 10, rows = 10 }: GridGalleryProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const gridRef = useRef<Grid>(null)
+  const [mounted, setMounted] = useState(false)
   const [dimensions, setDimensions] = useState({ 
     width: typeof window !== 'undefined' ? window.innerWidth : 1200, 
     height: typeof window !== 'undefined' ? window.innerHeight : 800 
@@ -99,6 +89,11 @@ export function GridGallery({ slug, columns = 10, rows = 10 }: GridGalleryProps)
   useEffect(() => {
     resetImageLoading()
   }, [tokens.length, resetImageLoading])
+
+  // Set mounted state on client
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   // Fixed cell size for consistent appearance
   const cellSize = 120 // Fixed size for each cell
@@ -289,9 +284,9 @@ export function GridGallery({ slug, columns = 10, rows = 10 }: GridGalleryProps)
 
   return (
     <div ref={containerRef} className={`bg-white relative grid-container ${isZooming ? 'grid-zooming' : ''}`} style={{ height: '100vh', width: '100vw', margin: 0, padding: 0, overflow: 'visible' }}>
-      {dimensions.width > 0 && dimensions.height > 0 && (
+      {mounted && dimensions.width > 0 && dimensions.height > 0 && (
         <TransformWrapper
-          key={`${slug}-${tokens.length}-${initialScale}-${initialX}-${initialY}`} // Force re-mount when tokens or position changes
+          key={`${slug}-${tokens.length}`} // Only re-mount when slug or token count changes
           initialScale={initialScale}
           initialPositionX={initialX}
           initialPositionY={initialY}

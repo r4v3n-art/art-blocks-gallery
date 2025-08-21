@@ -79,26 +79,30 @@ export function composeImageSrcSet(
   // Engine contracts only support standard size
   if (contractAddress && contractAddress !== '0x059edd72cd353df5106d2b9cc5ab83a52287ac3a') {
     const url = `https://media-proxy.artblocks.io/${encodeURIComponent(contractAddress)}/${encodeURIComponent(tokenId)}.png`
-    return `${url} 1x`
+    // Provide same URL for both 1x and 2x to support retina displays
+    return `${url} 1x, ${url} 2x`
   }
   
-  // For Flagship contracts, provide all sizes
+  // For Flagship contracts, provide all sizes with both width and density descriptors
   const baseUrl = 'https://media.artblocks.io'
   const thumbnailUrl = `${baseUrl}/thumb/${encodeURIComponent(tokenId)}.png`
   const standardUrl = `${baseUrl}/${encodeURIComponent(tokenId)}.png`
   const hdUrl = `${baseUrl}/hd/${encodeURIComponent(tokenId)}.png`
   
-  // Return srcset with width descriptors
+  // Return srcset with width descriptors for responsive sizing
   // Thumbnail: ~400px wide, Standard: ~1200px wide, HD: ~2400px wide
+  // HD images will be used for retina displays automatically based on device pixel ratio
   return `${thumbnailUrl} 400w, ${standardUrl} 1200w, ${hdUrl} 2400w`
 }
 
 /**
  * Generate sizes attribute for responsive images
  * This tells the browser which image size to use at different viewport widths
+ * Browser will automatically multiply by device pixel ratio for retina displays
  */
 export function generateImageSizes(cellSize: number): string {
-  // For grid cells, the actual display size depends on zoom level
-  // Start with the cell size and let browser handle DPR
-  return `(max-width: 640px) 100vw, ${cellSize}px`
+  // For grid cells, specify the actual rendered size
+  // Browser automatically accounts for device pixel ratio (DPR)
+  // On retina (2x) displays, browser will fetch 2x the resolution
+  return `${cellSize}px`
 }
