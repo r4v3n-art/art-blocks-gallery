@@ -19,7 +19,7 @@ const nextConfig: NextConfig = {
               "base-uri 'self'",
               "form-action 'self'",
               "worker-src 'self' blob:",
-              "frame-src 'self'"
+              "frame-src 'self' https://generator.artblocks.io https://*.artblocks.io"
             ].join('; ')
           }
         ]
