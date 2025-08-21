@@ -29,11 +29,10 @@ export function VirtualGrid({
   const containerRef = useRef<HTMLDivElement>(null)
   
   const {
-    isItemVisible,
-    getGridMetrics
+    isItemVisible
   } = useVirtualGrid(tokens.length, cellSize, containerRef)
 
-  const { gridHeight } = getGridMetrics()
+
 
   const gap = 10 // Fixed 10px gap for consistent spacing
   

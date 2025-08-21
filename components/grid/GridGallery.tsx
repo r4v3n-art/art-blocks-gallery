@@ -72,8 +72,7 @@ export function GridGallery({ slug, columns = 10, rows = 10 }: GridGalleryProps)
     loading: dataLoading, 
     error: dataError, 
     progress: dataProgress,
-    projectName,
-    artistName
+    projectName
   } = useGridData(slug, totalItemsNeeded)
 
   // Track image loading state
@@ -133,8 +132,8 @@ export function GridGallery({ slug, columns = 10, rows = 10 }: GridGalleryProps)
     return { initialX: x, initialY: y }
   }, [dimensions.width, dimensions.height, rowCount, cellSize, columnCount, initialScale])
   
-  // Track visible items for priority loading
-  const [visibleRange, setVisibleRange] = useState({ startRow: 0, endRow: 10, startCol: 0, endCol: 10 })
+  // Track visible items for priority loading (unused for now)
+  // const [visibleRange, setVisibleRange] = useState({ startRow: 0, endRow: 10, startCol: 0, endCol: 10 })
 
   // Handle container resize
   useEffect(() => {
@@ -161,7 +160,7 @@ export function GridGallery({ slug, columns = 10, rows = 10 }: GridGalleryProps)
   }, [])
 
   // Handle zoom state changes - throttle updates for better performance
-  const handleTransform = useCallback((e: any) => {
+  const handleTransform = useCallback((e: { state: { scale: number } }) => {
     // Only update scale if it changed significantly (reduces re-renders)
     if (Math.abs(e.state.scale - currentScale) > 0.01) {
       setCurrentScale(e.state.scale)
@@ -260,7 +259,7 @@ export function GridGallery({ slug, columns = 10, rows = 10 }: GridGalleryProps)
       <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="text-center space-y-4">
           <h2 className="text-xl font-light">No Tokens Found</h2>
-          <p className="text-gray-600">This project doesn't appear to have any minted tokens yet.</p>
+          <p className="text-gray-600">This project doesn&apos;t appear to have any minted tokens yet.</p>
         </div>
       </div>
     )
@@ -308,7 +307,7 @@ export function GridGallery({ slug, columns = 10, rows = 10 }: GridGalleryProps)
             step: 0.5,
             mode: "zoomIn"
           }}
-          onTransforming={handleTransform}
+          onTransformed={handleTransform}
           onPanningStop={handleTransformEnd}
           onZoomStop={handleTransformEnd}
         >
@@ -329,18 +328,14 @@ export function GridGallery({ slug, columns = 10, rows = 10 }: GridGalleryProps)
                 itemData={itemData}
                 overscanRowCount={2}
                 overscanColumnCount={2}
-                onItemsRendered={({ visibleRowStartIndex, visibleRowStopIndex, visibleColumnStartIndex, visibleColumnStopIndex }: {
-                  visibleRowStartIndex: number
-                  visibleRowStopIndex: number
-                  visibleColumnStartIndex: number
-                  visibleColumnStopIndex: number
-                }) => {
-                  setVisibleRange({
-                    startRow: visibleRowStartIndex,
-                    endRow: visibleRowStopIndex,
-                    startCol: visibleColumnStartIndex,
-                    endCol: visibleColumnStopIndex
-                  })
+                onItemsRendered={() => {
+                  // Track visible range for future optimization (unused for now)
+                  // setVisibleRange({
+                  //   startRow: visibleRowStartIndex,
+                  //   endRow: visibleRowStopIndex,
+                  //   startCol: visibleColumnStartIndex,
+                  //   endCol: visibleColumnStopIndex
+                  // })
                 }}
               >
                 {Cell}
