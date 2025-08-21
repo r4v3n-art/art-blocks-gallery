@@ -284,7 +284,7 @@ export function GridGallery({ slug, columns = 10, rows = 10 }: GridGalleryProps)
           initialScale={initialScale}
           initialPositionX={initialX}
           initialPositionY={initialY}
-          minScale={0.05}
+          minScale={initialScale}
           maxScale={20}
           centerOnInit={false}  // We're manually centering with initialPosition
           limitToBounds={false}
@@ -308,6 +308,7 @@ export function GridGallery({ slug, columns = 10, rows = 10 }: GridGalleryProps)
             step: 0.5,
             mode: "zoomIn"
           }}
+          // @ts-expect-error - onTransforming works in this version but types are outdated
           onTransforming={handleTransform}
           onPanningStop={handleTransformEnd}
           onZoomStop={handleTransformEnd}
