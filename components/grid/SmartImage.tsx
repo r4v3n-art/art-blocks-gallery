@@ -50,7 +50,7 @@ export function SmartImage({
           return
         }
 
-        const thumbnailUrl = composeMediaUrl(token.tokenId, token.contractAddress, 'thumbnail', token.projectId)
+        const thumbnailUrl = composeMediaUrl(token.tokenId, token.contractAddress, 'thumbnail')
         
         // Add cache-busting query param only for retries
         const finalUrl = retryCount > 0 ? `${thumbnailUrl}${thumbnailUrl.includes('?') ? '&' : '?'}retry=${retryCount}` : thumbnailUrl
@@ -72,7 +72,7 @@ export function SmartImage({
         if (onThumbnailLoad) onThumbnailLoad()
         onLoad()
         
-      } catch (error) {
+      } catch {
         console.log(`Failed to load thumbnail for token ${token.tokenId}, retries left: ${retriesLeft}`)
         
         if (retriesLeft > 0) {
@@ -125,21 +125,21 @@ export function SmartImage({
   }, [token.tokenId, onError])
 
   // Generate image URLs
-  const srcSet = composeImageSrcSet(token.tokenId, token.contractAddress, token.projectId)
+  const srcSet = composeImageSrcSet(token.tokenId, token.contractAddress)
   const sizes = generateImageSizes(displaySize)
   
   // Default src for initial load (thumbnail for flagship, standard for engine)
   const defaultSrc = token.imageUrl || composeMediaUrl(
     token.tokenId, 
     token.contractAddress, 
-    isEngine ? 'standard' : 'thumbnail', 
-    token.projectId
+    isEngine ? 'standard' : 'thumbnail'
   )
 
   return (
     <div className={`relative bg-white ${className}`} style={{ width: '100%', height: '100%' }}>
       {/* Always have white background as fallback */}
       {!hasError && (
+        // eslint-disable-next-line @next/next/no-img-element
         <img
           ref={imgRef}
           src={defaultSrc}
