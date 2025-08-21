@@ -2,7 +2,18 @@
 
 import { useState, useMemo, useCallback, useEffect, useRef, CSSProperties } from "react"
 import { FixedSizeGrid as Grid } from "react-window"
-import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch"
+import dynamic from "next/dynamic"
+
+// Dynamically import react-zoom-pan-pinch to ensure it only loads on client side
+const TransformWrapper = dynamic(
+  () => import("react-zoom-pan-pinch").then((mod) => ({ default: mod.TransformWrapper })),
+  { ssr: false }
+)
+
+const TransformComponent = dynamic(
+  () => import("react-zoom-pan-pinch").then((mod) => ({ default: mod.TransformComponent })),
+  { ssr: false }
+)
 import { useGridData } from "@/hooks/useGridData"
 import { useImageLoading } from "@/hooks/useImageLoading"
 import { GridLoadingState } from "./GridLoadingState"

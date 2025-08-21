@@ -68,3 +68,39 @@ export function getImageSizeFallbacks(preferredSize: ImageSize): ImageSize[] {
       return ['standard', 'thumbnail']
   }
 }
+
+/**
+ * Compose srcset string for responsive images
+ * Returns a srcset string with all available image sizes
+ */
+export function composeImageSrcSet(
+  tokenId: string,
+  contractAddress?: string,
+  projectId?: string
+): string {
+  // Engine contracts only support standard size
+  if (contractAddress && contractAddress !== '0x059edd72cd353df5106d2b9cc5ab83a52287ac3a') {
+    const url = `https://media-proxy.artblocks.io/${encodeURIComponent(contractAddress)}/${encodeURIComponent(tokenId)}.png`
+    return `${url} 1x`
+  }
+  
+  // For Flagship contracts, provide all sizes
+  const baseUrl = 'https://media.artblocks.io'
+  const thumbnailUrl = `${baseUrl}/thumb/${encodeURIComponent(tokenId)}.png`
+  const standardUrl = `${baseUrl}/${encodeURIComponent(tokenId)}.png`
+  const hdUrl = `${baseUrl}/hd/${encodeURIComponent(tokenId)}.png`
+  
+  // Return srcset with width descriptors
+  // Thumbnail: ~400px wide, Standard: ~1200px wide, HD: ~2400px wide
+  return `${thumbnailUrl} 400w, ${standardUrl} 1200w, ${hdUrl} 2400w`
+}
+
+/**
+ * Generate sizes attribute for responsive images
+ * This tells the browser which image size to use at different viewport widths
+ */
+export function generateImageSizes(cellSize: number): string {
+  // For grid cells, the actual display size depends on zoom level
+  // Start with the cell size and let browser handle DPR
+  return `(max-width: 640px) 100vw, ${cellSize}px`
+}
