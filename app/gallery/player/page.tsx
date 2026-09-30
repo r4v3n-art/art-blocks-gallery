@@ -45,6 +45,7 @@ function GalleryPlayer() {
   const [showBorderOverride, setShowBorderOverride] = useState<boolean | null>(null)
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [userExitedFullscreen, setUserExitedFullscreen] = useState(false)
+  const [readyTokenId, setReadyTokenId] = useState<string | null>(null)
   
   // Progressive loading states
   const [loadingProgress, setLoadingProgress] = useState({ loaded: 0, total: 0, percentage: 0 })
@@ -83,6 +84,7 @@ function GalleryPlayer() {
   const startFullscreen = searchParams.get('fullscreen') !== 'false' // Default to true
   const useAspectFrame = searchParams.get('frame') !== 'false' // Default to true
   const showCaption = searchParams.get('caption') !== 'false' // Default to true
+  const showLoader = searchParams.get('loader') !== 'false' // Default to true
   
   // Use override if set, otherwise use URL param
   const showBorder = showBorderOverride !== null ? showBorderOverride : showBorderFromUrl
@@ -364,6 +366,15 @@ function GalleryPlayer() {
   const currentEntry = shuffledEntries[currentIndex]
   const nextEntry = shuffledEntries.length > 1 ? shuffledEntries[(currentIndex + 1) % shuffledEntries.length] : null
   const isSingleItem = shuffledEntries.length === 1
+  const generatorReady =
+    !showLoader || (!!currentEntry && readyTokenId === currentEntry.tokenId)
+
+  const onGeneratorReadyChange = useCallback((ready: boolean, tokenId: string) => {
+    setReadyTokenId((current) => {
+      if (ready) return tokenId
+      return current === tokenId ? null : current
+    })
+  }, [])
   
   // Keep track of current token ID for progressive loading
   useEffect(() => {
@@ -441,9 +452,13 @@ function GalleryPlayer() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentIndex, shuffledEntries.length]) // Re-run when current index changes
 
-  // Timer for auto-advance (only if more than 1 item)
+  // Timer for auto-advance (only if more than 1 item). Hold the clock until
+  // the current generator has painted so a slow token is not skipped.
   useEffect(() => {
-    if (!isPlaying || !autoPlay || isSingleItem) return
+    if (!isPlaying || !autoPlay || isSingleItem || !generatorReady) {
+      if (!generatorReady) setTimeRemaining(duration)
+      return
+    }
 
     setTimeRemaining(duration)
     const interval = setInterval(() => {
@@ -457,7 +472,7 @@ function GalleryPlayer() {
     }, 1000)
 
     return () => clearInterval(interval)
-  }, [currentIndex, isPlaying, autoPlay, duration, isSingleItem, shuffledEntries.length])
+  }, [currentIndex, isPlaying, autoPlay, duration, isSingleItem, shuffledEntries.length, generatorReady])
 
   // TV / idle pointer: after ~3s without mouse activity, hide overlay chrome
   // and the cursor. Keyboard navigation is unchanged. The expanded sidebar
@@ -655,10 +670,10 @@ function GalleryPlayer() {
 
   // Reset timer when duration changes
   useEffect(() => {
-    if (isPlaying && autoPlay && !isSingleItem) {
+    if (isPlaying && autoPlay && !isSingleItem && generatorReady) {
       setTimeRemaining(duration)
     }
-  }, [duration, isPlaying, autoPlay, isSingleItem])
+  }, [duration, isPlaying, autoPlay, isSingleItem, generatorReady])
 
   // Show loading screen
   if (initializing) {
@@ -767,6 +782,8 @@ function GalleryPlayer() {
           isFullscreen={isFullscreen}
           useAspectFrame={useAspectFrame}
           reserveCaptionGutter={showCaption}
+          showLoader={showLoader}
+          onGeneratorReadyChange={onGeneratorReadyChange}
         />
 
         {showCaption && (
