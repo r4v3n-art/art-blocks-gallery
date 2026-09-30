@@ -35,6 +35,7 @@ function GalleryPlayer() {
   const [currentIndex, setCurrentIndex] = useState(0)
   const [isPlaying, setIsPlaying] = useState(false)
   const [showControls, setShowControls] = useState(true)
+  const [isPointerIdle, setIsPointerIdle] = useState(false)
   const [timeRemaining, setTimeRemaining] = useState(0)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [initializing, setInitializing] = useState(true)
@@ -454,32 +455,41 @@ function GalleryPlayer() {
     return () => clearInterval(interval)
   }, [currentIndex, isPlaying, autoPlay, duration, isSingleItem, shuffledEntries.length])
 
-  // Hide controls after inactivity (when sidebar is collapsed or hidden)
+  // TV / idle pointer: after ~3s without mouse activity, hide overlay chrome
+  // and the cursor. Keyboard navigation is unchanged. The expanded sidebar
+  // stays visible; overlay controls are already hidden in that layout.
   useEffect(() => {
-    // Show controls always when sidebar is expanded, or when single item
-    if ((showInfo && !sidebarCollapsed) || isSingleItem) {
+    const overlayPinned = showInfo && !sidebarCollapsed
+    if (overlayPinned) {
       setShowControls(true)
-      return
     }
 
-    let timeout: NodeJS.Timeout
-    
-    const resetTimeout = () => {
-      setShowControls(true)
+    let timeout: ReturnType<typeof setTimeout>
+
+    const markPointerActive = () => {
+      setIsPointerIdle(false)
+      if (!overlayPinned) {
+        setShowControls(true)
+      }
       clearTimeout(timeout)
-      timeout = setTimeout(() => setShowControls(false), 3000)
+      timeout = setTimeout(() => {
+        setIsPointerIdle(true)
+        if (!overlayPinned) {
+          setShowControls(false)
+        }
+      }, 3000)
     }
 
-    const handleMouseMove = () => resetTimeout()
-    
-    resetTimeout()
-    window.addEventListener('mousemove', handleMouseMove)
-    
+    markPointerActive()
+    window.addEventListener('mousemove', markPointerActive)
+    window.addEventListener('pointerdown', markPointerActive)
+
     return () => {
       clearTimeout(timeout)
-      window.removeEventListener('mousemove', handleMouseMove)
+      window.removeEventListener('mousemove', markPointerActive)
+      window.removeEventListener('pointerdown', markPointerActive)
     }
-  }, [isSingleItem, showInfo, sidebarCollapsed])
+  }, [showInfo, sidebarCollapsed])
 
   const nextSlide = useCallback(() => {
     if (isSingleItem) return
@@ -700,7 +710,7 @@ function GalleryPlayer() {
 
 
   return (
-    <div className="fixed inset-0 overflow-hidden flex">
+    <div className={`fixed inset-0 overflow-hidden flex ${isPointerIdle ? 'cursor-none [&_*]:cursor-none' : ''}`}>
       {showInfo && !sidebarCollapsed && (
         <GallerySidebar
           currentNFT={currentNFT}
@@ -739,7 +749,7 @@ function GalleryPlayer() {
             backgroundImage: `radial-gradient(circle at 1px 1px, rgba(0,0,0,0.02) 1px, transparent 0)`,
             backgroundSize: '20px 20px'
           } : {}),
-          cursor: showControls ? 'default' : 'none'
+          cursor: isPointerIdle ? 'none' : 'default'
         }}
       >
         <ArtworkDisplay
@@ -749,6 +759,13 @@ function GalleryPlayer() {
           isFullscreen={isFullscreen}
           useAspectFrame={useAspectFrame}
         />
+
+        {isPointerIdle && (
+          <div
+            className="absolute inset-0 z-10 cursor-none"
+            aria-hidden="true"
+          />
+        )}
 
         <GalleryOverlayControls
           showControls={showControls}

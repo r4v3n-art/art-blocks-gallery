@@ -64,7 +64,7 @@ export function GalleryOverlayControls({
   return (
     <>
       {autoPlay && isPlaying && (
-        <div className={`absolute top-0 left-0 w-full h-0.5 bg-input z-10 transition-opacity duration-300 ${showControls ? 'opacity-100' : 'opacity-0'}`}>
+        <div className={`absolute top-0 left-0 w-full h-0.5 bg-input z-10 transition-opacity duration-300 ${showControls ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
           <div 
             className="h-full bg-primary transition-all duration-1000 ease-linear"
             style={{ 
@@ -78,13 +78,13 @@ export function GalleryOverlayControls({
         variant="ghost"
         size="icon"
         onClick={onExit}
-        className={`absolute top-8 right-8 transition-opacity duration-300 ${showControls ? 'opacity-100' : 'opacity-0'} z-20`}
-        title="Exit gallery"
+        className={`absolute top-8 right-8 transition-opacity duration-300 ${showControls ? 'opacity-100' : 'opacity-0 pointer-events-none'} z-20`}
+        title={showControls ? "Exit gallery" : undefined}
       >
         <X className="w-5 h-5" />
       </Button>
 
-      <div className={`absolute top-8 left-8 transition-opacity duration-300 ${showControls ? 'opacity-100' : 'opacity-0'} z-20`}>
+      <div className={`absolute top-8 left-8 transition-opacity duration-300 ${showControls ? 'opacity-100' : 'opacity-0 pointer-events-none'} z-20`}>
         <div className="bg-card/95 backdrop-blur-sm border px-4 py-3 max-w-sm">
           {showInfo && sidebarCollapsed && currentNFT ? (
             <div className="space-y-2">
@@ -119,7 +119,7 @@ export function GalleryOverlayControls({
         </div>
       </div>
 
-      <div className={`absolute bottom-0 left-0 right-0 transition-opacity duration-300 ${showControls ? 'opacity-100' : 'opacity-0'} z-20`}>
+      <div className={`absolute bottom-0 left-0 right-0 transition-opacity duration-300 ${showControls ? 'opacity-100' : 'opacity-0 pointer-events-none'} z-20`}>
         <div className="bg-card/95 backdrop-blur-sm border-t p-6">
           <div className="flex items-center justify-center gap-4">
             {!isSingleItem && (
@@ -138,7 +138,7 @@ export function GalleryOverlayControls({
                 variant="ghost"
                 size="icon"
                 onClick={onToggleSidebar}
-                title="Show sidebar (⌘I)"
+                title={showControls ? "Show sidebar (⌘I)" : undefined}
               >
                 <Info className="w-5 h-5" />
               </Button>
@@ -148,7 +148,7 @@ export function GalleryOverlayControls({
               variant="ghost"
               size="icon"
               onClick={onToggleFullscreen}
-              title={isFullscreen ? "Exit fullscreen (F)" : "Enter fullscreen (F)"}
+              title={showControls ? (isFullscreen ? "Exit fullscreen (F)" : "Enter fullscreen (F)") : undefined}
             >
               {isFullscreen ? <Minimize className="w-5 h-5" /> : <Maximize className="w-5 h-5" />}
             </Button>
@@ -158,7 +158,7 @@ export function GalleryOverlayControls({
                 variant="ghost"
                 size="icon"
                 onClick={onExit}
-                title="Exit gallery"
+                title={showControls ? "Exit gallery" : undefined}
               >
                 <X className="w-5 h-5" />
               </Button>
