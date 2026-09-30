@@ -1,6 +1,8 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { parseAspectRatio } from "@/lib/aspectFrame"
+import { parseMintedAt, parseMintedCount } from "@/lib/tvCaption"
 
 export const AB_GQL_ENDPOINT = "https://artblocks-mainnet.hasura.app/v1/graphql"
 // Placeholder/invalid engine address occasionally seen in bad rows
@@ -839,6 +841,12 @@ export type TokenEntry = {
   projectWebsite?: string
   artistAddress?: string
   projectSlug?: string
+  /** Width / height from `projects_metadata.aspect_ratio`. */
+  aspectRatio?: number
+  /** Token `minted_at` timestamp. */
+  mintedAt?: string
+  /** Live minted count from `projects_metadata.invocations`. */
+  projectInvocations?: number
 }
 
 export async function searchTokensWithLiveView(
@@ -868,6 +876,7 @@ export async function searchTokensWithLiveView(
             preview_asset_url
             owner_address
             invocation
+            minted_at
             project { 
               id
               name 
@@ -875,6 +884,8 @@ export async function searchTokensWithLiveView(
               website
               artist_address
               slug
+              aspect_ratio
+              invocations
             }
           }
         }
@@ -894,6 +905,7 @@ export async function searchTokensWithLiveView(
             preview_asset_url
             owner_address
             invocation
+            minted_at
             project { 
               id
               name 
@@ -901,6 +913,8 @@ export async function searchTokensWithLiveView(
               website
               artist_address
               slug
+              aspect_ratio
+              invocations
             }
           }
         }
@@ -920,6 +934,7 @@ export async function searchTokensWithLiveView(
             preview_asset_url
             owner_address
             invocation
+            minted_at
             project { 
               id
               name 
@@ -927,6 +942,8 @@ export async function searchTokensWithLiveView(
               website
               artist_address
               slug
+              aspect_ratio
+              invocations
             }
           }
         }
@@ -949,6 +966,7 @@ export async function searchTokensWithLiveView(
       const previewUrl = item?.preview_asset_url
       const owner = item?.owner_address
       const invocation = item?.invocation
+      const mintedAt = item?.minted_at
       const proj = item?.project as Record<string, unknown> | undefined
       
       if (typeof tid === 'string') {
@@ -971,6 +989,9 @@ export async function searchTokensWithLiveView(
           projectWebsite: proj && typeof proj.website === 'string' ? (proj.website as string) : undefined,
           artistAddress: proj && typeof proj.artist_address === 'string' ? (proj.artist_address as string) : undefined,
           projectSlug: proj && typeof proj.slug === 'string' ? (proj.slug as string) : undefined,
+          aspectRatio: parseAspectRatio(proj?.aspect_ratio),
+          mintedAt: parseMintedAt(mintedAt),
+          projectInvocations: parseMintedCount(proj?.invocations),
         })
       }
     }
@@ -1017,6 +1038,7 @@ export async function tokensByIdWithLiveView(tokenIds: string[], max = 100000): 
             preview_asset_url
             owner_address
             invocation
+            minted_at
             project { 
               id
               name 
@@ -1024,6 +1046,8 @@ export async function tokensByIdWithLiveView(tokenIds: string[], max = 100000): 
               website
               artist_address
               slug
+              aspect_ratio
+              invocations
             }
           }
         }
@@ -1040,6 +1064,7 @@ export async function tokensByIdWithLiveView(tokenIds: string[], max = 100000): 
           const previewUrl = item?.preview_asset_url
           const owner = item?.owner_address
           const invocation = item?.invocation
+          const mintedAt = item?.minted_at
           const proj = item?.project as Record<string, unknown> | undefined
           
           if (typeof tid === 'string' && typeof uniqueId === 'string' && !seenIds.has(uniqueId)) {
@@ -1064,6 +1089,9 @@ export async function tokensByIdWithLiveView(tokenIds: string[], max = 100000): 
               projectWebsite: proj && typeof proj.website === 'string' ? (proj.website as string) : undefined,
               artistAddress: proj && typeof proj.artist_address === 'string' ? (proj.artist_address as string) : undefined,
               projectSlug: proj && typeof proj.slug === 'string' ? (proj.slug as string) : undefined,
+              aspectRatio: parseAspectRatio(proj?.aspect_ratio),
+              mintedAt: parseMintedAt(mintedAt),
+              projectInvocations: parseMintedCount(proj?.invocations),
             })
           }
         }
@@ -1082,6 +1110,7 @@ export async function tokensByIdWithLiveView(tokenIds: string[], max = 100000): 
           preview_asset_url
           owner_address
           invocation
+          minted_at
           project { 
             id
             name 
@@ -1089,6 +1118,8 @@ export async function tokensByIdWithLiveView(tokenIds: string[], max = 100000): 
             website
             artist_address
             slug
+            aspect_ratio
+            invocations
           }
         }
       }
@@ -1105,6 +1136,7 @@ export async function tokensByIdWithLiveView(tokenIds: string[], max = 100000): 
           const previewUrl = item?.preview_asset_url
           const owner = item?.owner_address
           const invocation = item?.invocation
+          const mintedAt = item?.minted_at
           const proj = item?.project as Record<string, unknown> | undefined
           
           // Create a unique ID if we don't have one
@@ -1133,6 +1165,9 @@ export async function tokensByIdWithLiveView(tokenIds: string[], max = 100000): 
               projectWebsite: proj && typeof proj.website === 'string' ? (proj.website as string) : undefined,
               artistAddress: proj && typeof proj.artist_address === 'string' ? (proj.artist_address as string) : undefined,
               projectSlug: proj && typeof proj.slug === 'string' ? (proj.slug as string) : undefined,
+              aspectRatio: parseAspectRatio(proj?.aspect_ratio),
+              mintedAt: parseMintedAt(mintedAt),
+              projectInvocations: parseMintedCount(proj?.invocations),
             })
           }
         }
@@ -1472,6 +1507,7 @@ export async function searchTokensWithLiveViewProgressive(
             preview_asset_url
             owner_address
             invocation
+            minted_at
             project { 
               id
               name 
@@ -1479,6 +1515,8 @@ export async function searchTokensWithLiveViewProgressive(
               website
               artist_address
               slug
+              aspect_ratio
+              invocations
             }
           }
         }
@@ -1500,6 +1538,7 @@ export async function searchTokensWithLiveViewProgressive(
               preview_asset_url
               owner_address
               invocation
+              minted_at
               project { 
                 id
                 name 
@@ -1507,6 +1546,8 @@ export async function searchTokensWithLiveViewProgressive(
                 website
                 artist_address
                 slug
+                aspect_ratio
+                invocations
               }
             }
           }
@@ -1526,6 +1567,7 @@ export async function searchTokensWithLiveViewProgressive(
               preview_asset_url
               owner_address
               invocation
+              minted_at
               project { 
                 id
                 name 
@@ -1533,6 +1575,8 @@ export async function searchTokensWithLiveViewProgressive(
                 website
                 artist_address
                 slug
+                aspect_ratio
+                invocations
               }
             }
           }
@@ -1553,6 +1597,7 @@ export async function searchTokensWithLiveViewProgressive(
             preview_asset_url
             owner_address
             invocation
+            minted_at
             project { 
               id
               name 
@@ -1560,6 +1605,8 @@ export async function searchTokensWithLiveViewProgressive(
               website
               artist_address
               slug
+              aspect_ratio
+              invocations
             }
           }
         }
@@ -1584,6 +1631,7 @@ export async function searchTokensWithLiveViewProgressive(
       const previewUrl = item?.preview_asset_url
       const owner = item?.owner_address
       const invocation = item?.invocation
+      const mintedAt = item?.minted_at
       const proj = item?.project as Record<string, unknown> | undefined
       
       if (typeof tid === 'string') {
@@ -1606,6 +1654,9 @@ export async function searchTokensWithLiveViewProgressive(
           projectWebsite: proj && typeof proj.website === 'string' ? (proj.website as string) : undefined,
           artistAddress: proj && typeof proj.artist_address === 'string' ? (proj.artist_address as string) : undefined,
           projectSlug: proj && typeof proj.slug === 'string' ? (proj.slug as string) : undefined,
+          aspectRatio: parseAspectRatio(proj?.aspect_ratio),
+          mintedAt: parseMintedAt(mintedAt),
+          projectInvocations: parseMintedCount(proj?.invocations),
         })
       }
     }

@@ -8,6 +8,7 @@ import { LoadingScreen } from "@/components/gallery/LoadingScreen"
 import { GallerySidebar } from "@/components/gallery/GallerySidebar"
 import { GalleryOverlayControls } from "@/components/gallery/GalleryOverlayControls"
 import { ArtworkDisplay } from "@/components/gallery/ArtworkDisplay"
+import { TvCaption } from "@/components/gallery/TvCaption"
 import { useKeyboardControls } from "@/hooks/useKeyboardControls"
 
 const THEME_KEY = 'abg-theme'
@@ -25,6 +26,9 @@ type NFTMeta = {
   projectWebsite?: string
   artistAddress?: string
   projectSlug?: string
+  aspectRatio?: number
+  mintedAt?: string
+  projectInvocations?: number
 }
 
 function GalleryPlayer() {
@@ -34,6 +38,7 @@ function GalleryPlayer() {
   const [currentIndex, setCurrentIndex] = useState(0)
   const [isPlaying, setIsPlaying] = useState(false)
   const [showControls, setShowControls] = useState(true)
+  const [isPointerIdle, setIsPointerIdle] = useState(false)
   const [timeRemaining, setTimeRemaining] = useState(0)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [initializing, setInitializing] = useState(true)
@@ -76,6 +81,8 @@ function GalleryPlayer() {
   const initialRandomOrder = searchParams.get('randomOrder') === 'true'
   const showBorderFromUrl = searchParams.get('showBorder') !== 'false' // Default to true
   const startFullscreen = searchParams.get('fullscreen') !== 'false' // Default to true
+  const useAspectFrame = searchParams.get('frame') !== 'false' // Default to true
+  const showCaption = searchParams.get('caption') !== 'false' // Default to true
   
   // Use override if set, otherwise use URL param
   const showBorder = showBorderOverride !== null ? showBorderOverride : showBorderFromUrl
@@ -452,32 +459,41 @@ function GalleryPlayer() {
     return () => clearInterval(interval)
   }, [currentIndex, isPlaying, autoPlay, duration, isSingleItem, shuffledEntries.length])
 
-  // Hide controls after inactivity (when sidebar is collapsed or hidden)
+  // TV / idle pointer: after ~3s without mouse activity, hide overlay chrome
+  // and the cursor. Keyboard navigation is unchanged. The expanded sidebar
+  // stays visible; overlay controls are already hidden in that layout.
   useEffect(() => {
-    // Show controls always when sidebar is expanded, or when single item
-    if ((showInfo && !sidebarCollapsed) || isSingleItem) {
+    const overlayPinned = showInfo && !sidebarCollapsed
+    if (overlayPinned) {
       setShowControls(true)
-      return
     }
 
-    let timeout: NodeJS.Timeout
-    
-    const resetTimeout = () => {
-      setShowControls(true)
+    let timeout: ReturnType<typeof setTimeout>
+
+    const markPointerActive = () => {
+      setIsPointerIdle(false)
+      if (!overlayPinned) {
+        setShowControls(true)
+      }
       clearTimeout(timeout)
-      timeout = setTimeout(() => setShowControls(false), 3000)
+      timeout = setTimeout(() => {
+        setIsPointerIdle(true)
+        if (!overlayPinned) {
+          setShowControls(false)
+        }
+      }, 3000)
     }
 
-    const handleMouseMove = () => resetTimeout()
-    
-    resetTimeout()
-    window.addEventListener('mousemove', handleMouseMove)
-    
+    markPointerActive()
+    window.addEventListener('mousemove', markPointerActive)
+    window.addEventListener('pointerdown', markPointerActive)
+
     return () => {
       clearTimeout(timeout)
-      window.removeEventListener('mousemove', handleMouseMove)
+      window.removeEventListener('mousemove', markPointerActive)
+      window.removeEventListener('pointerdown', markPointerActive)
     }
-  }, [isSingleItem, showInfo, sidebarCollapsed])
+  }, [showInfo, sidebarCollapsed])
 
   const nextSlide = useCallback(() => {
     if (isSingleItem) return
@@ -585,6 +601,9 @@ function GalleryPlayer() {
       projectWebsite: currentEntry.projectWebsite,
       artistAddress: currentEntry.artistAddress,
       projectSlug: currentEntry.projectSlug,
+      aspectRatio: currentEntry.aspectRatio,
+      mintedAt: currentEntry.mintedAt,
+      projectInvocations: currentEntry.projectInvocations,
     }
   }, [currentEntry])
 
@@ -604,6 +623,9 @@ function GalleryPlayer() {
       projectWebsite: nextEntry.projectWebsite,
       artistAddress: nextEntry.artistAddress,
       projectSlug: nextEntry.projectSlug,
+      aspectRatio: nextEntry.aspectRatio,
+      mintedAt: nextEntry.mintedAt,
+      projectInvocations: nextEntry.projectInvocations,
     }
   }, [nextEntry])
 
@@ -696,7 +718,7 @@ function GalleryPlayer() {
 
 
   return (
-    <div className="fixed inset-0 overflow-hidden flex">
+    <div className={`fixed inset-0 overflow-hidden flex ${isPointerIdle ? 'cursor-none [&_*]:cursor-none' : ''}`}>
       {showInfo && !sidebarCollapsed && (
         <GallerySidebar
           currentNFT={currentNFT}
@@ -723,13 +745,19 @@ function GalleryPlayer() {
       )}
 
       <div 
-        className={`flex-1 relative ${showBorder ? 'bg-gradient-to-br from-stone-50 to-stone-100' : 'bg-background'}`}
+        className={`flex-1 relative ${
+          useAspectFrame
+            ? 'bg-black'
+            : showBorder
+              ? 'bg-gradient-to-br from-stone-50 to-stone-100'
+              : 'bg-background'
+        }`}
         style={{
-          ...(showBorder ? {
+          ...(!useAspectFrame && showBorder ? {
             backgroundImage: `radial-gradient(circle at 1px 1px, rgba(0,0,0,0.02) 1px, transparent 0)`,
             backgroundSize: '20px 20px'
           } : {}),
-          cursor: showControls ? 'default' : 'none'
+          cursor: isPointerIdle ? 'none' : 'default'
         }}
       >
         <ArtworkDisplay
@@ -737,7 +765,26 @@ function GalleryPlayer() {
           nextNFT={nextNFT}
           showBorder={showBorder}
           isFullscreen={isFullscreen}
+          useAspectFrame={useAspectFrame}
+          reserveCaptionGutter={showCaption}
         />
+
+        {showCaption && (
+          <TvCaption
+            projectName={currentNFT.projectName}
+            invocation={currentNFT.invocation}
+            artist={currentNFT.artist}
+            mintedCount={currentNFT.projectInvocations}
+            mintedAt={currentNFT.mintedAt}
+          />
+        )}
+
+        {isPointerIdle && (
+          <div
+            className="absolute inset-0 z-10 cursor-none"
+            aria-hidden="true"
+          />
+        )}
 
         <GalleryOverlayControls
           showControls={showControls}
