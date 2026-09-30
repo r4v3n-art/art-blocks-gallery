@@ -8,6 +8,7 @@ import { LoadingScreen } from "@/components/gallery/LoadingScreen"
 import { GallerySidebar } from "@/components/gallery/GallerySidebar"
 import { GalleryOverlayControls } from "@/components/gallery/GalleryOverlayControls"
 import { ArtworkDisplay } from "@/components/gallery/ArtworkDisplay"
+import { TvCaption } from "@/components/gallery/TvCaption"
 import { useKeyboardControls } from "@/hooks/useKeyboardControls"
 
 const THEME_KEY = 'abg-theme'
@@ -26,6 +27,8 @@ type NFTMeta = {
   artistAddress?: string
   projectSlug?: string
   aspectRatio?: number
+  mintedAt?: string
+  projectInvocations?: number
 }
 
 function GalleryPlayer() {
@@ -79,6 +82,7 @@ function GalleryPlayer() {
   const showBorderFromUrl = searchParams.get('showBorder') !== 'false' // Default to true
   const startFullscreen = searchParams.get('fullscreen') !== 'false' // Default to true
   const useAspectFrame = searchParams.get('frame') !== 'false' // Default to true
+  const showCaption = searchParams.get('caption') !== 'false' // Default to true
   
   // Use override if set, otherwise use URL param
   const showBorder = showBorderOverride !== null ? showBorderOverride : showBorderFromUrl
@@ -598,6 +602,8 @@ function GalleryPlayer() {
       artistAddress: currentEntry.artistAddress,
       projectSlug: currentEntry.projectSlug,
       aspectRatio: currentEntry.aspectRatio,
+      mintedAt: currentEntry.mintedAt,
+      projectInvocations: currentEntry.projectInvocations,
     }
   }, [currentEntry])
 
@@ -618,6 +624,8 @@ function GalleryPlayer() {
       artistAddress: nextEntry.artistAddress,
       projectSlug: nextEntry.projectSlug,
       aspectRatio: nextEntry.aspectRatio,
+      mintedAt: nextEntry.mintedAt,
+      projectInvocations: nextEntry.projectInvocations,
     }
   }, [nextEntry])
 
@@ -758,7 +766,18 @@ function GalleryPlayer() {
           showBorder={showBorder}
           isFullscreen={isFullscreen}
           useAspectFrame={useAspectFrame}
+          reserveCaptionGutter={showCaption}
         />
+
+        {showCaption && (
+          <TvCaption
+            projectName={currentNFT.projectName}
+            invocation={currentNFT.invocation}
+            artist={currentNFT.artist}
+            mintedCount={currentNFT.projectInvocations}
+            mintedAt={currentNFT.mintedAt}
+          />
+        )}
 
         {isPointerIdle && (
           <div
