@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { parseAspectRatio } from "@/lib/aspectFrame"
 
 export const AB_GQL_ENDPOINT = "https://artblocks-mainnet.hasura.app/v1/graphql"
 // Placeholder/invalid engine address occasionally seen in bad rows
@@ -839,6 +840,8 @@ export type TokenEntry = {
   projectWebsite?: string
   artistAddress?: string
   projectSlug?: string
+  /** Width / height from `projects_metadata.aspect_ratio`. */
+  aspectRatio?: number
 }
 
 export async function searchTokensWithLiveView(
@@ -875,6 +878,7 @@ export async function searchTokensWithLiveView(
               website
               artist_address
               slug
+              aspect_ratio
             }
           }
         }
@@ -901,6 +905,7 @@ export async function searchTokensWithLiveView(
               website
               artist_address
               slug
+              aspect_ratio
             }
           }
         }
@@ -927,6 +932,7 @@ export async function searchTokensWithLiveView(
               website
               artist_address
               slug
+              aspect_ratio
             }
           }
         }
@@ -971,6 +977,7 @@ export async function searchTokensWithLiveView(
           projectWebsite: proj && typeof proj.website === 'string' ? (proj.website as string) : undefined,
           artistAddress: proj && typeof proj.artist_address === 'string' ? (proj.artist_address as string) : undefined,
           projectSlug: proj && typeof proj.slug === 'string' ? (proj.slug as string) : undefined,
+          aspectRatio: parseAspectRatio(proj?.aspect_ratio),
         })
       }
     }
@@ -1024,6 +1031,7 @@ export async function tokensByIdWithLiveView(tokenIds: string[], max = 100000): 
               website
               artist_address
               slug
+              aspect_ratio
             }
           }
         }
@@ -1064,6 +1072,7 @@ export async function tokensByIdWithLiveView(tokenIds: string[], max = 100000): 
               projectWebsite: proj && typeof proj.website === 'string' ? (proj.website as string) : undefined,
               artistAddress: proj && typeof proj.artist_address === 'string' ? (proj.artist_address as string) : undefined,
               projectSlug: proj && typeof proj.slug === 'string' ? (proj.slug as string) : undefined,
+              aspectRatio: parseAspectRatio(proj?.aspect_ratio),
             })
           }
         }
@@ -1089,6 +1098,7 @@ export async function tokensByIdWithLiveView(tokenIds: string[], max = 100000): 
             website
             artist_address
             slug
+            aspect_ratio
           }
         }
       }
@@ -1133,6 +1143,7 @@ export async function tokensByIdWithLiveView(tokenIds: string[], max = 100000): 
               projectWebsite: proj && typeof proj.website === 'string' ? (proj.website as string) : undefined,
               artistAddress: proj && typeof proj.artist_address === 'string' ? (proj.artist_address as string) : undefined,
               projectSlug: proj && typeof proj.slug === 'string' ? (proj.slug as string) : undefined,
+              aspectRatio: parseAspectRatio(proj?.aspect_ratio),
             })
           }
         }
@@ -1479,6 +1490,7 @@ export async function searchTokensWithLiveViewProgressive(
               website
               artist_address
               slug
+              aspect_ratio
             }
           }
         }
@@ -1507,6 +1519,7 @@ export async function searchTokensWithLiveViewProgressive(
                 website
                 artist_address
                 slug
+                aspect_ratio
               }
             }
           }
@@ -1533,6 +1546,7 @@ export async function searchTokensWithLiveViewProgressive(
                 website
                 artist_address
                 slug
+                aspect_ratio
               }
             }
           }
@@ -1560,6 +1574,7 @@ export async function searchTokensWithLiveViewProgressive(
               website
               artist_address
               slug
+              aspect_ratio
             }
           }
         }
@@ -1606,6 +1621,7 @@ export async function searchTokensWithLiveViewProgressive(
           projectWebsite: proj && typeof proj.website === 'string' ? (proj.website as string) : undefined,
           artistAddress: proj && typeof proj.artist_address === 'string' ? (proj.artist_address as string) : undefined,
           projectSlug: proj && typeof proj.slug === 'string' ? (proj.slug as string) : undefined,
+          aspectRatio: parseAspectRatio(proj?.aspect_ratio),
         })
       }
     }

@@ -25,6 +25,7 @@ type NFTMeta = {
   projectWebsite?: string
   artistAddress?: string
   projectSlug?: string
+  aspectRatio?: number
 }
 
 function GalleryPlayer() {
@@ -76,6 +77,7 @@ function GalleryPlayer() {
   const initialRandomOrder = searchParams.get('randomOrder') === 'true'
   const showBorderFromUrl = searchParams.get('showBorder') !== 'false' // Default to true
   const startFullscreen = searchParams.get('fullscreen') !== 'false' // Default to true
+  const useAspectFrame = searchParams.get('frame') !== 'false' // Default to true
   
   // Use override if set, otherwise use URL param
   const showBorder = showBorderOverride !== null ? showBorderOverride : showBorderFromUrl
@@ -585,6 +587,7 @@ function GalleryPlayer() {
       projectWebsite: currentEntry.projectWebsite,
       artistAddress: currentEntry.artistAddress,
       projectSlug: currentEntry.projectSlug,
+      aspectRatio: currentEntry.aspectRatio,
     }
   }, [currentEntry])
 
@@ -604,6 +607,7 @@ function GalleryPlayer() {
       projectWebsite: nextEntry.projectWebsite,
       artistAddress: nextEntry.artistAddress,
       projectSlug: nextEntry.projectSlug,
+      aspectRatio: nextEntry.aspectRatio,
     }
   }, [nextEntry])
 
@@ -723,9 +727,15 @@ function GalleryPlayer() {
       )}
 
       <div 
-        className={`flex-1 relative ${showBorder ? 'bg-gradient-to-br from-stone-50 to-stone-100' : 'bg-background'}`}
+        className={`flex-1 relative ${
+          useAspectFrame
+            ? 'bg-black'
+            : showBorder
+              ? 'bg-gradient-to-br from-stone-50 to-stone-100'
+              : 'bg-background'
+        }`}
         style={{
-          ...(showBorder ? {
+          ...(!useAspectFrame && showBorder ? {
             backgroundImage: `radial-gradient(circle at 1px 1px, rgba(0,0,0,0.02) 1px, transparent 0)`,
             backgroundSize: '20px 20px'
           } : {}),
@@ -737,6 +747,7 @@ function GalleryPlayer() {
           nextNFT={nextNFT}
           showBorder={showBorder}
           isFullscreen={isFullscreen}
+          useAspectFrame={useAspectFrame}
         />
 
         <GalleryOverlayControls
