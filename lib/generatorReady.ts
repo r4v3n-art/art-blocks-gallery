@@ -60,3 +60,17 @@ export function afterNextPaint(callback: () => void): () => void {
 
 /** Safety net if `load` never fires (network hang, broken generator). */
 export const GENERATOR_READY_FALLBACK_MS = 12_000
+
+/**
+ * iframe `load` fires for the initial about:blank document before the
+ * generator URL is committed. That event is not "canvas ready".
+ */
+export function isCommittedGeneratorLoad(iframe: HTMLIFrameElement): boolean {
+  try {
+    const href = iframe.contentWindow?.location.href
+    if (!href || href === "about:blank") return false
+  } catch {
+    // Cross-origin: the live generator origin has committed.
+  }
+  return true
+}

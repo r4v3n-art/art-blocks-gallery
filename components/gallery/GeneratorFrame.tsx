@@ -2,6 +2,7 @@
 
 import { useEffect } from "react"
 import { useGeneratorReady } from "@/hooks/useGeneratorReady"
+import { isCommittedGeneratorLoad } from "@/lib/generatorReady"
 
 export const GENERATOR_IFRAME_ALLOW =
   "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
@@ -22,8 +23,8 @@ interface GeneratorFrameProps {
 function GeneratorLoader() {
   return (
     <div className="flex flex-col items-center gap-4" role="status" aria-live="polite">
-      <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-current" />
-      <span className="font-light text-xs tracking-[0.2em] uppercase opacity-70">
+      <div className="h-8 w-8 animate-spin rounded-full border-2 border-stone-300 border-t-stone-700" />
+      <span className="font-light text-xs tracking-[0.22em] uppercase text-stone-500">
         Loading
       </span>
     </div>
@@ -63,7 +64,13 @@ export function GeneratorFrame({
         allow={GENERATOR_IFRAME_ALLOW}
         sandbox={GENERATOR_IFRAME_SANDBOX}
         loading="eager"
-        onLoad={showLoader ? onIframeLoad : undefined}
+        onLoad={
+          showLoader
+            ? (event) => {
+                if (isCommittedGeneratorLoad(event.currentTarget)) onIframeLoad()
+              }
+            : undefined
+        }
         onError={showLoader ? onIframeError : undefined}
       />
       {showLoader && (
