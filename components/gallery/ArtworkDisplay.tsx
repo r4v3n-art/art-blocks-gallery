@@ -6,7 +6,13 @@ import {
   computePlayerFrame,
   matChromePx,
   resolveAspectRatio,
+  type PlayerFrame,
 } from "@/lib/aspectFrame"
+import {
+  GENERATOR_IFRAME_ALLOW,
+  GENERATOR_IFRAME_SANDBOX,
+  GeneratorFrame,
+} from "@/components/gallery/GeneratorFrame"
 
 interface NFTMeta {
   tokenId: string
@@ -24,6 +30,9 @@ interface ArtworkDisplayProps {
   useAspectFrame?: boolean
   /** Reserve a right-side gutter so the TV caption does not overlap the art. */
   reserveCaptionGutter?: boolean
+  /** Cover the generator until it has painted. Default true. */
+  showLoader?: boolean
+  onGeneratorReadyChange?: (ready: boolean, tokenId: string) => void
 }
 
 const MAT_SHADOW =
@@ -38,10 +47,17 @@ export function ArtworkDisplay({
   isFullscreen,
   useAspectFrame = true,
   reserveCaptionGutter = true,
+  showLoader = true,
+  onGeneratorReadyChange,
 }: ArtworkDisplayProps) {
   const [, setNextIframeLoaded] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
-  const [frame, setFrame] = useState({ width: 0, height: 0, align: "center" as "left" | "center" })
+  const [frame, setFrame] = useState<PlayerFrame>({
+    width: 0,
+    height: 0,
+    align: "center",
+    marginY: 0,
+  })
   const aspectRatio = resolveAspectRatio(currentNFT.aspectRatio)
 
   useEffect(() => {
@@ -58,7 +74,7 @@ export function ArtworkDisplay({
         setFrame(computePlayerFrame(el.clientWidth, el.clientHeight, aspectRatio))
       } else {
         const size = computeContainFrame(el.clientWidth, el.clientHeight, aspectRatio)
-        setFrame({ ...size, align: "center" })
+        setFrame({ ...size, align: "center", marginY: 0 })
       }
     }
 
@@ -68,6 +84,9 @@ export function ArtworkDisplay({
     return () => observer.disconnect()
   }, [aspectRatio, useAspectFrame, isFullscreen, reserveCaptionGutter])
 
+  const iframeKey = `current-${currentNFT.tokenId}-${showBorder}-${isFullscreen}`
+  const iframeTitle = `${currentNFT.projectName} #${currentNFT.tokenId}`
+
   if (!useAspectFrame) {
     return (
       <div className={`absolute inset-0 flex items-center justify-center ${showBorder ? "p-12" : ""}`}>
@@ -75,14 +94,15 @@ export function ArtworkDisplay({
           className={`w-full h-full relative ${showBorder ? "bg-card p-4" : ""}`}
           style={showBorder ? { boxShadow: UNFRAMED_BORDER_SHADOW } : undefined}
         >
-          <iframe
-            key={`current-${currentNFT.tokenId}-${showBorder}-${isFullscreen}`}
+          <GeneratorFrame
+            tokenId={currentNFT.tokenId}
             src={currentNFT.generatorUrl}
+            title={iframeTitle}
+            iframeKey={iframeKey}
+            showLoader={showLoader}
             className="w-full h-full border-0"
-            title={`${currentNFT.projectName} #${currentNFT.tokenId}`}
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            sandbox="allow-scripts allow-same-origin allow-forms"
-            loading="eager"
+            overlayClassName={showBorder ? "bg-card text-muted-foreground" : "bg-background text-foreground"}
+            onReadyChange={onGeneratorReadyChange}
           />
 
           {nextNFT && (
@@ -92,8 +112,8 @@ export function ArtworkDisplay({
               className="absolute inset-0 w-full h-full border-0 opacity-0 pointer-events-none"
               style={{ zIndex: -1 }}
               title={`Preloading: ${nextNFT.projectName} #${nextNFT.tokenId}`}
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              sandbox="allow-scripts allow-same-origin allow-forms"
+              allow={GENERATOR_IFRAME_ALLOW}
+              sandbox={GENERATOR_IFRAME_SANDBOX}
               loading="eager"
               onLoad={() => setNextIframeLoaded(true)}
             />
@@ -110,8 +130,10 @@ export function ArtworkDisplay({
   return (
     <div
       ref={containerRef}
-      className={`absolute inset-0 flex items-center bg-black ${
-        frame.align === "left" ? "justify-start" : "justify-center"
+      className={`absolute inset-0 flex bg-black ${
+        frame.align === "left"
+          ? "items-start justify-start"
+          : "items-center justify-center"
       }`}
     >
       {frame.width > 0 && frame.height > 0 && (
@@ -120,19 +142,22 @@ export function ArtworkDisplay({
           style={{
             width: outerWidth,
             height: outerHeight,
+            marginTop: frame.marginY,
+            marginBottom: frame.marginY,
             boxShadow: MAT_SHADOW,
           }}
         >
           <div className="relative h-full w-full min-h-0 min-w-0 overflow-hidden border border-stone-400/40">
-            <iframe
-              key={`current-${currentNFT.tokenId}-${showBorder}-${isFullscreen}`}
+            <GeneratorFrame
+              tokenId={currentNFT.tokenId}
               src={currentNFT.generatorUrl}
+              title={iframeTitle}
+              iframeKey={iframeKey}
+              showLoader={showLoader}
               className="absolute inset-0 h-full w-full border-0"
               style={{ overflow: "hidden" }}
-              title={`${currentNFT.projectName} #${currentNFT.tokenId}`}
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              sandbox="allow-scripts allow-same-origin allow-forms"
-              loading="eager"
+              overlayClassName="bg-stone-50 text-stone-500"
+              onReadyChange={onGeneratorReadyChange}
             />
 
             {nextNFT && (
@@ -142,8 +167,8 @@ export function ArtworkDisplay({
                 className="absolute inset-0 h-full w-full border-0 opacity-0 pointer-events-none"
                 style={{ zIndex: -1 }}
                 title={`Preloading: ${nextNFT.projectName} #${nextNFT.tokenId}`}
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                sandbox="allow-scripts allow-same-origin allow-forms"
+                allow={GENERATOR_IFRAME_ALLOW}
+                sandbox={GENERATOR_IFRAME_SANDBOX}
                 loading="eager"
                 onLoad={() => setNextIframeLoaded(true)}
               />
